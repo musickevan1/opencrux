@@ -484,7 +484,38 @@ function renderPreviewFrames() {
       previewEmptyNode.textContent = "Annotated MediaPipe frames will appear here while analysis runs.";
       previewFrameLabelNode.textContent = "No preview frames yet.";
     } else {
-      previewEmptyNode.textContent = "Upload a supported single-climber clip to mount the analysis stage.";
+      previewEmptyNode.replaceChildren();
+      const dropContent = document.createElement("div");
+      dropContent.className = "drop-zone-content";
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("class", "drop-zone-icon");
+      svg.setAttribute("width", "48");
+      svg.setAttribute("height", "48");
+      svg.setAttribute("viewBox", "0 0 48 48");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("aria-hidden", "true");
+      const path1 = document.createElementNS(svgNS, "path");
+      path1.setAttribute("d", "M24 4L24 32M24 32L16 24M24 32L32 24");
+      path1.setAttribute("stroke", "currentColor");
+      path1.setAttribute("stroke-width", "2.5");
+      path1.setAttribute("stroke-linecap", "round");
+      path1.setAttribute("stroke-linejoin", "round");
+      const path2 = document.createElementNS(svgNS, "path");
+      path2.setAttribute("d", "M8 36v4a4 4 0 004 4h24a4 4 0 004-4v-4");
+      path2.setAttribute("stroke", "currentColor");
+      path2.setAttribute("stroke-width", "2.5");
+      path2.setAttribute("stroke-linecap", "round");
+      path2.setAttribute("stroke-linejoin", "round");
+      svg.append(path1, path2);
+      const label = document.createElement("p");
+      label.className = "drop-zone-label";
+      label.textContent = "Drop your send";
+      const hint = document.createElement("p");
+      hint.className = "drop-zone-hint";
+      hint.textContent = "or tap to select a video";
+      dropContent.append(svg, label, hint);
+      previewEmptyNode.appendChild(dropContent);
       previewFrameLabelNode.textContent = "No preview frames yet.";
     }
     return;
@@ -831,6 +862,17 @@ function updateControls() {
   refreshHistoryButton.disabled = disableInteractions;
 }
 
+function verdictIconSvg(key) {
+  const icons = {
+    idle: '<svg class="verdict-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a5 5 0 014.9 4.03A4.5 4.5 0 0118.5 16H12m0-13a5 5 0 00-4.9 4.03A4.5 4.5 0 005.5 16H12m0-13v13m0 0v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    ready: '<svg class="verdict-icon" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>',
+    caution: '<svg class="verdict-icon" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 3h.01M12 3L2 21h20L12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    analyzing: '<svg class="verdict-icon verdict-icon-spin" viewBox="0 0 24 24" fill="none"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    negative: '<svg class="verdict-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l-6 6m0-6l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  };
+  return icons[key] || icons.idle;
+}
+
 function renderVerdict() {
   const verdict = deriveVerdict();
   workspaceShell.dataset.verdict = verdict.key;
@@ -839,6 +881,11 @@ function renderVerdict() {
   verdictTitleNode.textContent = verdict.title;
   verdictMessageNode.textContent = verdict.message;
   workspaceStatusLabelNode.textContent = verdict.label;
+
+  const existingIcon = verdictTitleNode.parentElement.querySelector(".verdict-icon");
+  if (existingIcon) existingIcon.remove();
+  verdictTitleNode.insertAdjacentHTML("beforebegin", verdictIconSvg(verdict.key));
+
   renderStatus(verdict);
 }
 
@@ -1091,6 +1138,58 @@ refreshHistoryButton.addEventListener("click", async () => {
 
 previewScrubberNode.addEventListener("input", () => {
   updateSelectedPreviewFrame(Number(previewScrubberNode.value));
+});
+
+/* ============================================================
+   Drag-and-Drop Upload
+   ============================================================ */
+
+const frameStage = document.getElementById("frame-stage");
+const videoFileInput = document.getElementById("video-file");
+
+function preventDefaults(event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+  frameStage.addEventListener(eventName, preventDefaults);
+  document.body.addEventListener(eventName, preventDefaults);
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  frameStage.addEventListener(eventName, () => {
+    if (!isInteractionLocked()) {
+      frameStage.classList.add("drag-over");
+    }
+  });
+});
+
+["dragleave", "drop"].forEach((eventName) => {
+  frameStage.addEventListener(eventName, () => {
+    frameStage.classList.remove("drag-over");
+  });
+});
+
+frameStage.addEventListener("drop", (event) => {
+  if (isInteractionLocked()) {
+    return;
+  }
+  const files = event.dataTransfer?.files;
+  if (files && files.length > 0) {
+    const file = files[0];
+    if (file.type.startsWith("video/")) {
+      videoFileInput.files = files;
+      videoFileInput.dispatchEvent(new Event("change", { bubbles: true }));
+      form.requestSubmit();
+    }
+  }
+});
+
+frameStage.addEventListener("click", () => {
+  if (!isInteractionLocked() && previewEmptyNode && !previewEmptyNode.classList.contains("hidden")) {
+    videoFileInput.click();
+  }
 });
 
 renderApp();

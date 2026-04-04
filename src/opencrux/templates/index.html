@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OpenCrux</title>
-    <link rel="stylesheet" href="/static/app.css" />
+    <link rel="stylesheet" href="/static/app.css?v=4" />
   </head>
   <body>
     <main class="layout">
       <header class="masthead">
         <div class="masthead-copy">
           <p class="eyebrow">Local-first climbing analysis</p>
-          <h1>OpenCrux</h1>
+          <h1 title="Local-first. No cloud. No excuses.">OpenCrux</h1>
           <p class="lede">
             Review one recorded bouldering or board session at a time, inspect the pose evidence,
             and decide whether the run is trustworthy.
@@ -62,9 +62,18 @@
               <p id="session-meta" class="session-meta">Upload a supported clip to mount the analysis workspace.</p>
             </div>
 
-            <div id="frame-stage" class="frame-stage">
+            <div id="frame-stage" class="frame-stage drop-zone">
               <img id="preview-image" class="preview-image hidden" alt="Annotated pose preview" />
-              <div id="preview-empty" class="preview-empty">Upload a supported single-climber clip to mount the analysis stage.</div>
+              <div id="preview-empty" class="preview-empty">
+                <div class="drop-zone-content">
+                  <svg class="drop-zone-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                    <path d="M24 4L24 32M24 32L16 24M24 32L32 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 36v4a4 4 0 004 4h24a4 4 0 004-4v-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <p class="drop-zone-label">Drop your send</p>
+                  <p class="drop-zone-hint">or tap to select a video</p>
+                </div>
+              </div>
             </div>
 
             <div class="frame-tools">
@@ -72,7 +81,7 @@
                 <div class="progress-track">
                   <div id="preview-progress-bar" class="progress-bar"></div>
                 </div>
-                <p id="preview-progress-label" class="preview-progress-label">0%</p>
+                <p id="preview-progress-label" class="preview-progress-label" role="status">0%</p>
               </div>
               <div class="frame-tools-meta">
                 <p class="mini-label">Stage</p>
@@ -93,25 +102,26 @@
             <section class="rail-card">
               <p class="eyebrow">Workflow</p>
               <h3 id="workspace-status-label">Idle</h3>
-              <p id="status" class="status idle">Waiting for a video.</p>
+              <p id="status" class="status idle" aria-live="polite">Waiting for a video.</p>
             </section>
 
-            <section class="rail-card diagnostics-card">
-              <div class="section-heading compact">
+            <details class="rail-card diagnostics-card collapsible" open>
+              <summary class="section-heading compact collapsible-trigger">
                 <div>
                   <p class="eyebrow">Live details</p>
                   <h3>Diagnostics</h3>
                 </div>
-              </div>
+                <svg class="collapse-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </summary>
               <div id="preview-stats" class="preview-stats"></div>
-            </section>
+            </details>
           </aside>
         </div>
 
-        <section id="verdict-band" class="verdict-band verdict-idle">
+        <section id="verdict-band" class="verdict-band verdict-idle" aria-live="polite">
           <div>
             <p class="eyebrow">Reliability verdict</p>
-            <h2 id="verdict-title">Ready for a clip</h2>
+            <h2 id="verdict-title" aria-describedby="verdict-message">Ready for a clip</h2>
           </div>
           <p id="verdict-message" class="verdict-message">
             Built for single-climber climbing footage. Unsupported conditions should fail clearly instead of guessing.
@@ -165,18 +175,21 @@
         </section>
       </section>
 
-      <section id="history-shelf" class="history-shelf">
-        <div class="history-header">
+      <details id="history-shelf" class="history-shelf collapsible" open>
+        <summary class="history-header collapsible-trigger">
           <div>
             <p class="eyebrow">Recent sessions</p>
             <h2>History</h2>
           </div>
-          <button id="refresh-history-button" class="secondary-button" type="button">Refresh history</button>
-        </div>
+          <div class="history-actions">
+            <button id="refresh-history-button" class="secondary-button" type="button">Refresh history</button>
+            <svg class="collapse-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </summary>
         <div id="history-empty" class="history-empty">No saved sessions yet.</div>
         <div id="history-list" class="history-list"></div>
-      </section>
+      </details>
     </main>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=4"></script>
   </body>
 </html>
