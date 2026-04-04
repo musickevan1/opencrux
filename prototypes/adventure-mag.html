@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPEN CRUX -- Adventure Magazine Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  background-color: #f7f5f0;
+  color: #1a1a1a;
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* subtle paper texture */
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ========== TYPOGRAPHY ========== */
+.font-headline { font-family: 'Bebas Neue', 'Arial Black', sans-serif; letter-spacing: 0.04em; line-height: 0.88; text-transform: uppercase; }
+.font-data { font-family: 'Space Mono', 'Courier New', monospace; }
+.font-body { font-family: 'Source Serif 4', Georgia, serif; }
+
+/* ========== COLORS ========== */
+:root {
+  --teal: #0d4f4f;
+  --coral: #ff6b5b;
+  --yellow: #ffd23f;
+  --black: #1a1a1a;
+  --green: #2d6a4f;
+  --cream: #f7f5f0;
+  --warm-gray: #b5b0a5;
+  --light-gray: #e8e4dc;
+}
+
+/* ========== LAYOUT ========== */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ========== SECTION LABEL ========== */
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 6px;
+  margin-bottom: 24px;
+}
+
+/* ========== TORN PAPER EDGE ========== */
+.torn-edge {
+  clip-path: polygon(
+    0% 0%, 3% 1%, 7% 0%, 11% 1.5%, 15% 0%, 19% 2%, 23% 0.5%, 27% 1%, 31% 0%, 35% 2%, 39% 0%, 43% 1.5%, 47% 0%, 51% 2%, 55% 0.5%, 59% 1%, 63% 0%, 67% 1.5%, 71% 0%, 75% 2%, 79% 0.5%, 83% 1%, 87% 0%, 91% 1.5%, 95% 0%, 100% 1%,
+    100% 98%, 97% 100%, 93% 98.5%, 89% 100%, 85% 98%, 81% 100%, 77% 99%, 73% 100%, 69% 98%, 65% 100%, 61% 98.5%, 57% 100%, 53% 98%, 49% 100%, 45% 99%, 41% 100%, 37% 98.5%, 33% 100%, 29% 98%, 25% 100%, 21% 99%, 17% 100%, 13% 98%, 9% 100%, 5% 99%, 0% 100%
+  );
+}
+
+/* ========== 1. MASTHEAD ========== */
+.masthead {
+  position: relative;
+  padding: 40px 0 60px;
+  overflow: hidden;
+}
+
+.masthead .container {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  position: relative;
+}
+
+.masthead-title {
+  font-size: clamp(80px, 12vw, 160px);
+  color: var(--black);
+  position: relative;
+  z-index: 2;
+}
+
+.masthead-title span {
+  display: block;
+}
+
+.masthead-title .open {
+  font-size: 0.55em;
+  color: var(--teal);
+  margin-bottom: -0.15em;
+}
+
+.coral-bar {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  width: 40%;
+  height: 8px;
+  background: var(--coral);
+  z-index: 1;
+}
+
+.sideways-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--coral);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  position: absolute;
+  right: 24px;
+  top: 80px;
+  z-index: 3;
+}
+
+.masthead-subtitle {
+  font-family: 'Source Serif 4', serif;
+  font-style: italic;
+  font-size: clamp(14px, 2vw, 18px);
+  color: var(--warm-gray);
+  padding-bottom: 12px;
+  max-width: 320px;
+}
+
+.masthead-rule {
+  border: none;
+  height: 3px;
+  background: var(--black);
+  margin: 0;
+}
+
+.masthead-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+}
+
+/* ========== 2. UPLOAD ========== */
+.upload-section {
+  padding: 48px 0;
+}
+
+.upload-card {
+  background: white;
+  padding: 56px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: var(--coral);
+}
+
+.upload-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 16px;
+}
+
+.upload-headline {
+  font-size: clamp(48px, 7vw, 88px);
+  color: var(--black);
+  margin-bottom: 16px;
+}
+
+.upload-body {
+  font-size: 17px;
+  color: #666;
+  max-width: 520px;
+  margin-bottom: 36px;
+  font-style: italic;
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--light-gray);
+  border-radius: 4px;
+  padding: 48px 32px;
+  text-align: center;
+  margin-bottom: 32px;
+  transition: border-color 0.3s;
+  background: #fcfbf8;
+}
+
+.upload-dropzone:hover {
+  border-color: var(--coral);
+}
+
+.upload-dropzone-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.upload-dropzone-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--warm-gray);
+  text-transform: uppercase;
+}
+
+.upload-dropzone-sub {
+  font-size: 13px;
+  color: #999;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.btn-coral {
+  display: inline-block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  background: var(--coral);
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  cursor: pointer;
+  text-transform: uppercase;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-coral:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 91, 0.35);
+}
+
+.btn-coral::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 4px;
+  width: 100%;
+  height: 100%;
+  background: var(--black);
+  z-index: -1;
+}
+
+/* ========== 3. VERDICT BANNER ========== */
+.verdict-banner {
+  background: var(--green);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.verdict-banner .yellow-stripe {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: var(--yellow);
+  transform: translateY(-50%) rotate(-1deg);
+  z-index: 1;
+}
+
+.verdict-inner {
+  position: relative;
+  z-index: 2;
+  padding: 56px 0;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.verdict-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.verdict-text {
+  font-size: clamp(64px, 10vw, 140px);
+  color: white;
+  flex: 1;
+  min-width: 280px;
+}
+
+.verdict-badge {
+  background: var(--yellow);
+  color: var(--black);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 0.1em;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.verdict-badge .check {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* ========== 4. FRAME PREVIEW ========== */
+.frame-section {
+  padding: 56px 0;
+}
+
+.frame-editorial {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+  align-items: start;
+}
+
+.frame-image-wrap {
+  position: relative;
+  background: #ddd;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+
+.frame-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--teal) 0%, #1a3a3a 50%, var(--green) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.frame-image-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 30% 60% at 45% 55%, rgba(255,210,63,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 20% 40% at 48% 50%, rgba(255,107,91,0.1) 0%, transparent 60%);
+}
+
+.climber-silhouette {
+  position: relative;
+  z-index: 1;
+  width: 120px;
+  height: 200px;
+}
+
+.climber-silhouette svg {
+  width: 100%;
+  height: 100%;
+}
+
+.frame-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding: 32px 24px 16px;
+  color: white;
+}
+
+.frame-caption-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.frame-caption-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.06em;
+}
+
+.frame-scrubber {
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  margin-top: 12px;
+  position: relative;
+  border-radius: 2px;
+}
+
+.frame-scrubber-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 35%;
+  background: var(--coral);
+  border-radius: 2px;
+}
+
+.frame-scrubber-handle {
+  position: absolute;
+  left: 35%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* sidebar */
+.frame-sidebar {
+  padding-top: 8px;
+}
+
+.frame-sidebar-stat {
+  border-bottom: 1px solid var(--light-gray);
+  padding: 16px 0;
+}
+
+.frame-sidebar-stat:first-child {
+  padding-top: 0;
+}
+
+.frame-sidebar-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 4px;
+}
+
+.frame-sidebar-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--teal);
+}
+
+.frame-sidebar-stat-unit {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--warm-gray);
+  margin-left: 4px;
+}
+
+.frame-pullquote {
+  margin-top: 32px;
+  padding: 24px;
+  border-left: 4px solid var(--coral);
+  background: white;
+}
+
+.frame-pullquote p {
+  font-size: 16px;
+  font-style: italic;
+  color: #555;
+  line-height: 1.5;
+}
+
+.frame-pullquote cite {
+  display: block;
+  margin-top: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--warm-gray);
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+/* ========== 5. DIAGNOSTICS ========== */
+.diagnostics-section {
+  padding: 48px 0;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px;
+  background: var(--light-gray);
+}
+
+.diag-cell {
+  background: white;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.diag-cell-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 8px;
+}
+
+.diag-cell-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--teal);
+  word-break: break-all;
+}
+
+.diag-cell-note {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ========== 6. METRICS ========== */
+.metrics-section {
+  padding: 56px 0;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.metric-card {
+  background: white;
+  padding: 40px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: attr(data-index);
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 120px;
+  color: rgba(0,0,0,0.03);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.metric-card-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+  margin-bottom: 12px;
+}
+
+.metric-card-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 6vw, 88px);
+  line-height: 0.9;
+}
+
+.metric-card-unit {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  color: var(--warm-gray);
+  margin-top: 8px;
+}
+
+.metric-card-bar {
+  margin-top: 16px;
+  height: 4px;
+  background: var(--light-gray);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.metric-card-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+.metric-card.featured {
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--teal);
+  color: white;
+}
+
+.metric-card.featured .metric-card-label { color: rgba(255,255,255,0.5); }
+.metric-card.featured .metric-card-unit { color: rgba(255,255,255,0.5); }
+.metric-card.featured .metric-card-bar { background: rgba(255,255,255,0.15); }
+
+/* ========== 7. WARNINGS / FIELD NOTES ========== */
+.warnings-section {
+  padding: 48px 0;
+}
+
+.warnings-empty {
+  text-align: center;
+  padding: 56px 32px;
+  background: white;
+}
+
+.warnings-empty-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.warnings-empty-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+.warnings-empty-body {
+  font-size: 15px;
+  color: #999;
+  font-style: italic;
+}
+
+/* ========== 8. ATTEMPTS / ASCENT LOG ========== */
+.attempts-section {
+  padding: 56px 0;
+}
+
+.attempts-timeline {
+  position: relative;
+  padding-left: 48px;
+}
+
+.attempts-timeline::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--light-gray);
+}
+
+.attempt-item {
+  position: relative;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.attempt-item:last-child {
+  border-bottom: none;
+}
+
+.attempt-dot {
+  position: absolute;
+  left: -38px;
+  top: 28px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--green);
+  background: var(--cream);
+}
+
+.attempt-dot.success {
+  background: var(--green);
+}
+
+.attempt-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.attempt-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--teal);
+}
+
+.attempt-tag {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: var(--green);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+.attempt-meta {
+  display: flex;
+  gap: 32px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.attempt-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--warm-gray);
+}
+
+.attempt-stat-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--black);
+  margin-top: 2px;
+}
+
+/* ========== 9. AI / BETA INTELLIGENCE ========== */
+.ai-section {
+  padding: 56px 0;
+}
+
+.ai-card {
+  background: var(--black);
+  color: white;
+  padding: 56px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-card::before {
+  content: 'AI';
+  position: absolute;
+  top: -40px;
+  right: -20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 280px;
+  color: rgba(255,255,255,0.03);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.ai-headline {
+  font-size: clamp(40px, 5vw, 64px);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.ai-headline .accent {
+  color: var(--yellow);
+}
+
+.ai-body {
+  max-width: 560px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.6);
+  font-style: italic;
+  margin-bottom: 32px;
+}
+
+.ai-feature-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 40px;
+}
+
+.ai-feature-item {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  padding-left: 20px;
+  position: relative;
+}
+
+.ai-feature-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+}
+
+.ai-status {
+  margin-top: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.ai-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yellow);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ========== 10. HISTORY / RECENT DISPATCHES ========== */
+.history-section {
+  padding: 56px 0 80px;
+}
+
+.history-list {
+  list-style: none;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 20px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--light-gray);
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: rgba(13,79,79,0.03);
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+.history-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px;
+  color: var(--light-gray);
+  text-align: center;
+  line-height: 1;
+}
+
+.history-info {}
+
+.history-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--black);
+}
+
+.history-date {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--warm-gray);
+  margin-top: 2px;
+}
+
+.history-verdict {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.history-verdict.ready {
+  background: rgba(45,106,79,0.1);
+  color: var(--green);
+}
+
+.history-verdict.caution {
+  background: rgba(255,210,63,0.15);
+  color: #b8960c;
+}
+
+.history-verdict.negative {
+  background: rgba(255,107,91,0.1);
+  color: var(--coral);
+}
+
+/* ========== FOOTER ========== */
+.footer {
+  background: var(--black);
+  color: rgba(255,255,255,0.3);
+  padding: 40px 0;
+  text-align: center;
+}
+
+.footer-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.footer-note {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .frame-editorial {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-card.featured {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+
+  .diag-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ai-feature-list {
+    grid-template-columns: 1fr;
+  }
+
+  .verdict-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .history-item {
+    grid-template-columns: 40px 1fr;
+    gap: 12px;
+  }
+
+  .history-verdict {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .container { padding: 0 16px; }
+
+  .upload-card { padding: 36px 24px; }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card.featured {
+    grid-column: span 1;
+  }
+
+  .diag-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-card {
+    padding: 36px 24px;
+  }
+
+  .attempt-meta {
+    gap: 16px;
+  }
+
+  .masthead .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sideways-text {
+    writing-mode: horizontal-tb;
+    position: relative;
+    right: auto;
+    top: auto;
+    margin-top: 8px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 1. MASTHEAD ========== -->
+<header class="masthead">
+  <div class="coral-bar"></div>
+  <div class="sideways-text">Local-First &bull; Privacy-First &bull; No Cloud</div>
+  <div class="container">
+    <div>
+      <h1 class="masthead-title font-headline">
+        <span class="open">Open</span>
+        <span>Crux</span>
+      </h1>
+    </div>
+    <p class="masthead-subtitle">Climbing video analysis, powered by on-device AI. Your sends, your data, your beta.</p>
+  </div>
+</header>
+<div class="container">
+  <hr class="masthead-rule">
+  <div class="masthead-meta">
+    <span>Vol. 1 &mdash; Issue 04</span>
+    <span>April 2026</span>
+    <span>Design Prototype</span>
+  </div>
+</div>
+
+<!-- ========== 2. UPLOAD ========== -->
+<section class="upload-section">
+  <div class="container">
+    <div class="section-label">Photo Submission Desk</div>
+    <div class="upload-card torn-edge">
+      <div class="upload-eyebrow">Submit Footage for Analysis</div>
+      <h2 class="upload-headline font-headline">Submit Your Send</h2>
+      <p class="upload-body">Drop your bouldering video below. OpenCrux will analyze every frame -- poses, movement, rest -- and deliver a full field report.</p>
+      <div class="upload-dropzone">
+        <span class="upload-dropzone-icon">&#9650;</span>
+        <div class="upload-dropzone-text">Drop .mp4 or .mov here</div>
+        <div class="upload-dropzone-sub">or click to browse your files</div>
+      </div>
+      <button class="btn-coral">Analyze &rarr;</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 3. VERDICT BANNER ========== -->
+<section class="verdict-banner">
+  <div class="yellow-stripe"></div>
+  <div class="container">
+    <div class="verdict-inner">
+      <div style="flex:1; min-width:280px;">
+        <span class="verdict-label">Field Report &mdash; Reliability Verdict</span>
+        <h2 class="verdict-text font-headline">Supported Run</h2>
+      </div>
+      <div class="verdict-badge">
+        <div class="check">&#10003;</div>
+        READY
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4. FRAME PREVIEW ========== -->
+<section class="frame-section">
+  <div class="container">
+    <div class="section-label">Field Report &bull; Frame Analysis</div>
+    <div class="frame-editorial">
+      <div>
+        <div class="frame-image-wrap">
+          <div class="frame-image-placeholder">
+            <!-- Stylized climber silhouette with pose skeleton -->
+            <svg class="climber-silhouette" viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:120px;height:200px;">
+              <circle cx="60" cy="22" r="14" fill="rgba(255,255,255,0.7)"/>
+              <line x1="60" y1="36" x2="58" y2="90" stroke="rgba(255,255,255,0.7)" stroke-width="4" stroke-linecap="round"/>
+              <line x1="58" y1="50" x2="30" y2="70" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="58" y1="50" x2="95" y2="40" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="58" y1="90" x2="35" y2="140" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="58" y1="90" x2="80" y2="135" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="35" y1="140" x2="25" y2="175" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="80" y1="135" x2="90" y2="170" stroke="rgba(255,255,255,0.7)" stroke-width="3" stroke-linecap="round"/>
+              <!-- joints -->
+              <circle cx="30" cy="70" r="4" fill="#ff6b5b"/>
+              <circle cx="95" cy="40" r="4" fill="#ff6b5b"/>
+              <circle cx="35" cy="140" r="4" fill="#ffd23f"/>
+              <circle cx="80" cy="135" r="4" fill="#ffd23f"/>
+              <circle cx="25" cy="175" r="4" fill="#ff6b5b"/>
+              <circle cx="90" cy="170" r="4" fill="#ff6b5b"/>
+              <!-- hold indicators -->
+              <rect x="88" y="32" width="16" height="16" rx="2" fill="none" stroke="#ffd23f" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <rect x="18" y="168" width="16" height="16" rx="2" fill="none" stroke="#ffd23f" stroke-width="1.5" stroke-dasharray="3 2"/>
+            </svg>
+          </div>
+          <div class="frame-caption">
+            <div class="frame-caption-label">Frame 127 of 362</div>
+            <div class="frame-caption-title font-headline">Mid-Crux Sequence &mdash; Right Hand Reach</div>
+            <div class="frame-scrubber">
+              <div class="frame-scrubber-fill"></div>
+              <div class="frame-scrubber-handle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar stats -->
+      <div class="frame-sidebar">
+        <div class="frame-sidebar-stat">
+          <div class="frame-sidebar-stat-label">Resolution</div>
+          <div class="frame-sidebar-stat-value">1080<span class="frame-sidebar-stat-unit">px</span></div>
+        </div>
+        <div class="frame-sidebar-stat">
+          <div class="frame-sidebar-stat-label">Framerate</div>
+          <div class="frame-sidebar-stat-value">30<span class="frame-sidebar-stat-unit">fps</span></div>
+        </div>
+        <div class="frame-sidebar-stat">
+          <div class="frame-sidebar-stat-label">Duration</div>
+          <div class="frame-sidebar-stat-value">12.1<span class="frame-sidebar-stat-unit">sec</span></div>
+        </div>
+        <div class="frame-sidebar-stat">
+          <div class="frame-sidebar-stat-label">Pose Model</div>
+          <div class="frame-sidebar-stat-value" style="font-size:22px;">MoveNet</div>
+        </div>
+        <div class="frame-pullquote">
+          <p>"Clean send. Minimal hesitation through the crux. Foot placement reads confidently."</p>
+          <cite>OpenCrux AI Analysis</cite>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5. DIAGNOSTICS ========== -->
+<section class="diagnostics-section">
+  <div class="container">
+    <div class="section-label">Data Summit &bull; Session Diagnostics</div>
+    <div class="diag-grid">
+      <div class="diag-cell">
+        <div class="diag-cell-label">Pose Model</div>
+        <div class="diag-cell-value">MoveNet SinglePose</div>
+      </div>
+      <div class="diag-cell">
+        <div class="diag-cell-label">Backend</div>
+        <div class="diag-cell-value">WebGL 2.0</div>
+      </div>
+      <div class="diag-cell">
+        <div class="diag-cell-label">Avg Inference</div>
+        <div class="diag-cell-value">18.4ms</div>
+      </div>
+      <div class="diag-cell">
+        <div class="diag-cell-label">Frames Analyzed</div>
+        <div class="diag-cell-value">362 / 362</div>
+      </div>
+      <div class="diag-cell">
+        <div class="diag-cell-label">Min Confidence</div>
+        <div class="diag-cell-value">0.30</div>
+        <div class="diag-cell-note">threshold</div>
+      </div>
+      <div class="diag-cell">
+        <div class="diag-cell-label">Processing Time</div>
+        <div class="diag-cell-value">6.66s</div>
+        <div class="diag-cell-note">total wall clock</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 6. METRICS ========== -->
+<section class="metrics-section">
+  <div class="container">
+    <div class="section-label">Data Summit &bull; Performance Metrics</div>
+    <div class="metrics-grid">
+
+      <!-- FEATURED: Time on Wall -->
+      <div class="metric-card featured torn-edge" data-index="01">
+        <div class="metric-card-label">Time on Wall</div>
+        <div class="metric-card-value" style="font-size:clamp(72px,10vw,120px);">8.48</div>
+        <div class="metric-card-unit">seconds of active climbing</div>
+        <div class="metric-card-bar">
+          <div class="metric-card-bar-fill" style="width:70%; background:var(--yellow);"></div>
+        </div>
+      </div>
+
+      <!-- Attempts -->
+      <div class="metric-card torn-edge" data-index="02">
+        <div class="metric-card-label">Attempts</div>
+        <div class="metric-card-value" style="color:var(--green);">1</div>
+        <div class="metric-card-unit">flash</div>
+      </div>
+
+      <!-- Rest Time -->
+      <div class="metric-card torn-edge" data-index="03">
+        <div class="metric-card-label">Rest Time</div>
+        <div class="metric-card-value" style="color:var(--teal);">0.00</div>
+        <div class="metric-card-unit">seconds idle</div>
+        <div class="metric-card-bar">
+          <div class="metric-card-bar-fill" style="width:0%; background:var(--coral);"></div>
+        </div>
+      </div>
+
+      <!-- Vertical Progress -->
+      <div class="metric-card torn-edge" data-index="04">
+        <div class="metric-card-label">Vertical Progress</div>
+        <div class="metric-card-value" style="color:var(--coral);">0.223</div>
+        <div class="metric-card-unit">normalized displacement</div>
+        <div class="metric-card-bar">
+          <div class="metric-card-bar-fill" style="width:22.3%; background:var(--green);"></div>
+        </div>
+      </div>
+
+      <!-- Visibility -->
+      <div class="metric-card torn-edge" data-index="05">
+        <div class="metric-card-label">Visibility Score</div>
+        <div class="metric-card-value" style="color:var(--teal);">0.891</div>
+        <div class="metric-card-unit">avg keypoint confidence</div>
+        <div class="metric-card-bar">
+          <div class="metric-card-bar-fill" style="width:89.1%; background:var(--teal);"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== 7. WARNINGS / FIELD NOTES ========== -->
+<section class="warnings-section">
+  <div class="container">
+    <div class="section-label">Field Notes &bull; Warnings &amp; Advisories</div>
+    <div class="warnings-empty torn-edge">
+      <div class="warnings-empty-icon">&#9745;</div>
+      <div class="warnings-empty-title font-headline">All Clear</div>
+      <p class="warnings-empty-body">No warnings detected for this session. Clean slate -- keep sending.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 8. ATTEMPTS / ASCENT LOG ========== -->
+<section class="attempts-section">
+  <div class="container">
+    <div class="section-label">Session Log &bull; Ascent Log</div>
+    <h2 class="font-headline" style="font-size:clamp(40px,5vw,64px); margin-bottom:32px; color:var(--teal);">Ascent Log</h2>
+    <div class="attempts-timeline">
+
+      <div class="attempt-item">
+        <div class="attempt-dot success"></div>
+        <div class="attempt-header">
+          <div class="attempt-number font-headline">01</div>
+          <span class="attempt-tag">Send</span>
+        </div>
+        <div class="attempt-meta">
+          <div>
+            <div class="attempt-stat-label">Start Frame</div>
+            <div class="attempt-stat-value font-data">0</div>
+          </div>
+          <div>
+            <div class="attempt-stat-label">End Frame</div>
+            <div class="attempt-stat-value font-data">254</div>
+          </div>
+          <div>
+            <div class="attempt-stat-label">Wall Time</div>
+            <div class="attempt-stat-value font-data">8.48s</div>
+          </div>
+          <div>
+            <div class="attempt-stat-label">Vertical</div>
+            <div class="attempt-stat-value font-data">0.223</div>
+          </div>
+          <div>
+            <div class="attempt-stat-label">Avg Visibility</div>
+            <div class="attempt-stat-value font-data">0.891</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== 9. AI / BETA INTELLIGENCE ========== -->
+<section class="ai-section">
+  <div class="container">
+    <div class="section-label" style="color:var(--warm-gray); border-color:var(--light-gray);">Coming Soon</div>
+    <div class="ai-card torn-edge">
+      <h2 class="ai-headline font-headline">Beta <span class="accent">Intelligence</span></h2>
+      <p class="ai-body">AI-powered move-by-move breakdown. Identify crux sequences, suggest alternate beta, and compare against your progression history -- all processed locally.</p>
+      <ul class="ai-feature-list">
+        <li class="ai-feature-item">Move classification</li>
+        <li class="ai-feature-item">Crux identification</li>
+        <li class="ai-feature-item">Efficiency scoring</li>
+        <li class="ai-feature-item">Beta suggestions</li>
+        <li class="ai-feature-item">Session comparison</li>
+        <li class="ai-feature-item">Progress tracking</li>
+      </ul>
+      <div class="ai-status">
+        <div class="ai-status-dot"></div>
+        In Development
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 10. HISTORY / RECENT DISPATCHES ========== -->
+<section class="history-section">
+  <div class="container">
+    <div class="section-label">Recent Dispatches &bull; Session Archive</div>
+    <h2 class="font-headline" style="font-size:clamp(40px,5vw,64px); margin-bottom:32px; color:var(--teal);">Recent Dispatches</h2>
+    <ul class="history-list">
+
+      <li class="history-item">
+        <div class="history-number font-headline">01</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Moonboard V5 -- Campus Crux</div>
+          <div class="history-date font-data">2026-04-04 &bull; 12.1s &bull; 1 attempt</div>
+        </div>
+        <div class="history-verdict ready font-data">Ready</div>
+      </li>
+
+      <li class="history-item">
+        <div class="history-number font-headline">02</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Kilter Board V6 -- Compression Start</div>
+          <div class="history-date font-data">2026-04-03 &bull; 34.7s &bull; 3 attempts</div>
+        </div>
+        <div class="history-verdict caution font-data">Caution</div>
+      </li>
+
+      <li class="history-item">
+        <div class="history-number font-headline">03</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Outdoor Slab V3 -- Balancy Topout</div>
+          <div class="history-date font-data">2026-04-01 &bull; 18.2s &bull; 2 attempts</div>
+        </div>
+        <div class="history-verdict ready font-data">Ready</div>
+      </li>
+
+      <li class="history-item">
+        <div class="history-number font-headline">04</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Gym Cave V7 -- Heel Hook Traverse</div>
+          <div class="history-date font-data">2026-03-29 &bull; 52.1s &bull; 5 attempts</div>
+        </div>
+        <div class="history-verdict negative font-data">Negative</div>
+      </li>
+
+      <li class="history-item">
+        <div class="history-number font-headline">05</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Tension Board V4 -- Dynamic Finish</div>
+          <div class="history-date font-data">2026-03-27 &bull; 9.8s &bull; 1 attempt</div>
+        </div>
+        <div class="history-verdict ready font-data">Ready</div>
+      </li>
+
+      <li class="history-item">
+        <div class="history-number font-headline">06</div>
+        <div class="history-info">
+          <div class="history-title font-headline">Outdoor Overhang V5 -- Crimp Ladder</div>
+          <div class="history-date font-data">2026-03-25 &bull; 28.4s &bull; 4 attempts</div>
+        </div>
+        <div class="history-verdict caution font-data">Caution</div>
+      </li>
+
+    </ul>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-brand">Open Crux</div>
+    <div class="footer-note">Design Prototype &bull; Not Functional &bull; All Data is Mock</div>
+  </div>
+</footer>
+
+</body>
+</html>

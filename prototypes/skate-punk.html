@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCrux — Skate Punk Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --kraft: #d4c5a9;
+  --kraft-dark: #b8a98a;
+  --pink: #ff1493;
+  --lime: #b8ff00;
+  --orange: #ff6600;
+  --cyan: #00d4ff;
+  --black: #111;
+  --white: #fff;
+  --sticker-shadow: 4px 4px 0px rgba(0,0,0,0.25);
+  --peel-shadow: 6px 6px 2px rgba(0,0,0,0.15), inset -2px -2px 0 rgba(0,0,0,0.05);
+  --border: 3px solid var(--black);
+  --border-thick: 4px solid var(--black);
+}
+
+body {
+  font-family: 'Patrick Hand', cursive;
+  background-color: var(--kraft);
+  color: var(--black);
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/* Paper grain noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Subtle ruled-line background */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 39px,
+    rgba(0,0,0,0.03) 39px,
+    rgba(0,0,0,0.03) 40px
+  );
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+h1, h2, h3 { font-family: 'Permanent Marker', cursive; }
+.mono { font-family: 'Courier Prime', monospace; }
+
+/* ============================================
+   UTILITY: STICKER
+   ============================================ */
+.sticker {
+  background: var(--white);
+  border: var(--border-thick);
+  box-shadow: var(--sticker-shadow);
+  padding: 20px;
+  position: relative;
+}
+
+.sticker--pink { background: var(--pink); color: var(--white); }
+.sticker--lime { background: var(--lime); color: var(--black); }
+.sticker--orange { background: var(--orange); color: var(--white); }
+.sticker--cyan { background: var(--cyan); color: var(--black); }
+.sticker--black { background: var(--black); color: var(--white); }
+
+/* Tape marks */
+.tape::before,
+.tape::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 24px;
+  background: rgba(200, 190, 160, 0.6);
+  border: 1px solid rgba(0,0,0,0.1);
+  z-index: 2;
+}
+.tape::before { top: -10px; left: 20px; transform: rotate(-5deg); }
+.tape::after { bottom: -10px; right: 20px; transform: rotate(3deg); }
+
+.tape-top-right::before { top: -10px; right: 30px; left: auto; transform: rotate(8deg); }
+.tape-corners::before { top: -8px; left: 30px; transform: rotate(-3deg); }
+.tape-corners::after { top: -8px; right: 30px; left: auto; transform: rotate(5deg); }
+
+/* ============================================
+   HEADER
+   ============================================ */
+.header {
+  text-align: center;
+  padding: 40px 0 30px;
+  position: relative;
+}
+
+.header__title {
+  font-size: clamp(3rem, 10vw, 7rem);
+  transform: rotate(-2deg);
+  display: inline-block;
+  color: var(--black);
+  text-shadow: 4px 4px 0 var(--pink), -2px -2px 0 var(--lime);
+  letter-spacing: -2px;
+  position: relative;
+}
+
+.header__subtitle {
+  font-family: 'Patrick Hand', cursive;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  color: var(--black);
+  margin-top: 5px;
+  transform: rotate(1deg);
+}
+
+.header__chips {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 2px solid var(--black);
+  font-family: 'Permanent Marker', cursive;
+  font-size: 0.85rem;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+/* Scattered decorative sticker-chips */
+.header__deco {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+/* ============================================
+   UPLOAD SECTION
+   ============================================ */
+.upload-section {
+  margin: 40px auto;
+  max-width: 600px;
+  position: relative;
+}
+
+.notebook-page {
+  background: var(--white);
+  border: var(--border);
+  box-shadow: var(--sticker-shadow);
+  padding: 40px 30px;
+  position: relative;
+  transform: rotate(-0.5deg);
+  /* Notebook holes */
+  background-image:
+    radial-gradient(circle, var(--kraft) 6px, transparent 6px),
+    radial-gradient(circle, var(--kraft) 6px, transparent 6px),
+    radial-gradient(circle, var(--kraft) 6px, transparent 6px),
+    repeating-linear-gradient(transparent, transparent 27px, #cde 27px, #cde 28px);
+  background-position: 16px 30px, 16px 100px, 16px 170px, 0 0;
+  background-size: 14px 14px, 14px 14px, 14px 14px, 100% 100%;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  padding-left: 50px;
+  /* Red margin line */
+  border-left: 4px solid #e88;
+}
+
+.notebook-page::before {
+  content: '';
+  position: absolute;
+  left: 42px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(220, 80, 80, 0.3);
+}
+
+.upload-title {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  transform: rotate(-1deg);
+  margin-bottom: 8px;
+}
+
+.upload-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+.upload-dropzone {
+  border: 3px dashed var(--black);
+  border-radius: 4px;
+  padding: 30px;
+  text-align: center;
+  margin-bottom: 20px;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0,0,0,0.02) 10px,
+    rgba(0,0,0,0.02) 20px
+  );
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.upload-dropzone:hover {
+  background: rgba(184, 255, 0, 0.1);
+}
+
+.upload-dropzone__icon { font-size: 3rem; display: block; margin-bottom: 8px; }
+.upload-dropzone__text { font-size: 1.1rem; }
+.upload-dropzone__hint { font-size: 0.85rem; color: #888; margin-top: 4px; font-family: 'Courier Prime', monospace; display: block; }
+
+.btn-send {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: var(--pink);
+  color: var(--white);
+  border: var(--border-thick);
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--sticker-shadow);
+  transform: rotate(0.5deg);
+  transition: transform 0.15s, box-shadow 0.15s;
+  letter-spacing: 1px;
+}
+
+.btn-send:hover {
+  transform: rotate(-0.5deg) scale(1.02);
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.3);
+}
+
+/* ============================================
+   VERDICT SECTION
+   ============================================ */
+.verdict-section {
+  margin: 50px auto;
+  text-align: center;
+  position: relative;
+}
+
+.verdict-sticker {
+  display: inline-block;
+  padding: 30px 60px;
+  border: 6px solid var(--black);
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  transform: rotate(-3deg);
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.2);
+  position: relative;
+  background: var(--lime);
+  color: var(--black);
+  cursor: pointer;
+  user-select: none;
+}
+
+.verdict-sticker::before {
+  content: '\2605';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  font-size: 2.5rem;
+  transform: rotate(15deg);
+  color: var(--orange);
+}
+
+.verdict-sticker::after {
+  content: '\2605';
+  position: absolute;
+  bottom: -15px;
+  right: -15px;
+  font-size: 2rem;
+  transform: rotate(-20deg);
+  color: var(--pink);
+}
+
+.verdict-detail {
+  margin-top: 20px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 1rem;
+  color: #555;
+  transform: rotate(0.5deg);
+}
+
+/* ============================================
+   FRAME PREVIEW (Polaroid)
+   ============================================ */
+.frame-section {
+  margin: 50px auto;
+  max-width: 500px;
+}
+
+.polaroid {
+  background: var(--white);
+  border: var(--border);
+  padding: 16px 16px 50px;
+  box-shadow: var(--peel-shadow);
+  transform: rotate(2deg);
+  position: relative;
+}
+
+.polaroid__image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--black);
+  border: 2px solid #333;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mock climbing frame with CSS art */
+.polaroid__image-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Climber silhouette */
+.climber-figure {
+  position: relative;
+  width: 60px;
+  height: 120px;
+}
+
+.climber-figure__head {
+  width: 20px;
+  height: 20px;
+  background: var(--cyan);
+  border-radius: 50%;
+  margin: 0 auto 4px;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+.climber-figure__body {
+  width: 16px;
+  height: 40px;
+  background: var(--cyan);
+  margin: 0 auto;
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.climber-figure__arm-l,
+.climber-figure__arm-r {
+  position: absolute;
+  width: 30px;
+  height: 6px;
+  background: var(--cyan);
+  top: 28px;
+  border-radius: 3px;
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+.climber-figure__arm-l { left: -8px; transform: rotate(-40deg); }
+.climber-figure__arm-r { right: -8px; transform: rotate(40deg); }
+
+.climber-figure__leg-l,
+.climber-figure__leg-r {
+  position: absolute;
+  width: 6px;
+  height: 35px;
+  background: var(--cyan);
+  bottom: 0;
+  border-radius: 3px;
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+.climber-figure__leg-l { left: 14px; transform: rotate(10deg); }
+.climber-figure__leg-r { right: 14px; transform: rotate(-15deg); transform-origin: top; }
+
+/* Wall holds */
+.hold {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255,255,255,0.3);
+}
+
+/* Overlay label */
+.polaroid__overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.7);
+  color: var(--lime);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border: 1px solid var(--lime);
+}
+
+.polaroid__caption {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.2rem;
+  color: #333;
+  transform: rotate(-2deg);
+}
+
+.polaroid__frame-num {
+  position: absolute;
+  bottom: 14px;
+  right: 18px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* ============================================
+   DIAGNOSTICS (Sticky Notes)
+   ============================================ */
+.diagnostics-section {
+  margin: 50px auto;
+}
+
+.section-heading {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: 24px;
+  transform: rotate(-1deg);
+  display: inline-block;
+}
+
+.sticky-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.sticky-note {
+  padding: 20px;
+  box-shadow: var(--peel-shadow);
+  position: relative;
+  min-height: 140px;
+}
+
+.sticky-note--yellow { background: #fff176; }
+.sticky-note--pink { background: #f48fb1; }
+.sticky-note--blue { background: #81d4fa; }
+.sticky-note--green { background: #a5d6a7; }
+.sticky-note--orange { background: #ffcc80; }
+
+.sticky-note__title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: rgba(0,0,0,0.3);
+}
+
+.sticky-note__value {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.9rem;
+}
+
+.sticky-note__check {
+  font-size: 1.5rem;
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+}
+
+/* ============================================
+   METRICS (Hand-drawn circles)
+   ============================================ */
+.metrics-section {
+  margin: 50px auto;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.metric-bubble {
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--sticker-shadow);
+  position: relative;
+}
+
+/* Wobbly border effect via outline */
+.metric-bubble::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 3px solid var(--black);
+  border-radius: 50%;
+  opacity: 0.15;
+  transform: rotate(2deg);
+}
+
+.metric-bubble__number {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+
+.metric-bubble__label {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1rem;
+  margin-top: 4px;
+  color: #555;
+}
+
+.metric-bubble__emoji {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.metric-bubble--pink { border-color: var(--pink); }
+.metric-bubble--pink .metric-bubble__number { color: var(--pink); }
+.metric-bubble--lime { border-color: #6a9a00; background: var(--lime); }
+.metric-bubble--orange { border-color: var(--orange); }
+.metric-bubble--orange .metric-bubble__number { color: var(--orange); }
+.metric-bubble--cyan { border-color: var(--cyan); }
+.metric-bubble--cyan .metric-bubble__number { color: #0099bb; }
+
+/* ============================================
+   WARNINGS
+   ============================================ */
+.warnings-section {
+  margin: 40px auto;
+  text-align: center;
+}
+
+.warning-sticker {
+  display: inline-block;
+  padding: 16px 40px;
+  background: #4caf50;
+  color: var(--white);
+  border: var(--border-thick);
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  transform: rotate(1.5deg);
+  box-shadow: var(--sticker-shadow);
+}
+
+/* ============================================
+   ATTEMPTS TIMELINE
+   ============================================ */
+.attempts-section {
+  margin: 50px auto;
+  max-width: 800px;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--black);
+}
+
+.timeline-event {
+  position: relative;
+  margin-bottom: 30px;
+  padding: 16px 20px;
+  background: var(--white);
+  border: var(--border);
+  box-shadow: var(--sticker-shadow);
+}
+
+.timeline-event::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 20px;
+  width: 16px;
+  height: 16px;
+  background: var(--pink);
+  border: 3px solid var(--black);
+  border-radius: 50%;
+}
+
+.timeline-event--send::before { background: var(--lime); }
+
+.timeline-event__title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+}
+
+.timeline-event__detail {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.timeline-event__tag {
+  display: inline-block;
+  padding: 2px 10px;
+  margin-top: 8px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 0.8rem;
+  border: 2px solid var(--black);
+}
+
+/* ============================================
+   AI SECTION
+   ============================================ */
+.ai-section {
+  margin: 50px auto;
+  text-align: center;
+}
+
+.robo-sticker {
+  display: inline-block;
+  padding: 40px 50px;
+  background: var(--black);
+  color: var(--white);
+  border: 6px solid var(--cyan);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), var(--sticker-shadow);
+  transform: rotate(-1.5deg);
+  position: relative;
+}
+
+.robo-sticker__title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 12px;
+  color: var(--cyan);
+}
+
+.robo-sticker__body {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.2rem;
+  color: #aaa;
+}
+
+.robo-sticker__badge {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  background: var(--orange);
+  color: var(--white);
+  border: 3px solid var(--black);
+  padding: 6px 14px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 0.9rem;
+  transform: rotate(12deg);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+}
+
+.blink { animation: blink 1.2s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ============================================
+   HISTORY (Sticker Collection)
+   ============================================ */
+.history-section {
+  margin: 60px auto 80px;
+}
+
+.sticker-collection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 28px;
+}
+
+.history-card {
+  padding: 20px;
+  border: var(--border-thick);
+  box-shadow: var(--peel-shadow);
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.history-card:hover {
+  transform: rotate(0deg) scale(1.03) !important;
+  z-index: 10;
+}
+
+.history-card__name {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.history-card__date {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.history-card__stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.history-card__stat {
+  padding: 2px 8px;
+  border: 2px solid var(--black);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem;
+  background: rgba(255,255,255,0.5);
+}
+
+.history-card__verdict {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 0.9rem;
+  padding: 3px 10px;
+  border: 2px solid var(--black);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+.history-card__verdict--sent { background: var(--lime); }
+.history-card__verdict--sketch { background: var(--orange); color: var(--white); }
+.history-card__verdict--bail { background: var(--pink); color: var(--white); }
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+  text-align: center;
+  padding: 30px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem;
+  color: #888;
+  position: relative;
+  z-index: 1;
+}
+
+.footer__sticker {
+  display: inline-block;
+  padding: 8px 20px;
+  background: var(--black);
+  color: var(--lime);
+  border: 2px solid var(--lime);
+  transform: rotate(-1deg);
+  margin-bottom: 10px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .container { padding: 12px; }
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .metric-bubble { padding: 16px 8px; }
+  .sticky-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .sticker-collection { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .verdict-sticker { padding: 20px 30px; }
+  .polaroid { transform: rotate(1deg); }
+  .notebook-page { padding: 30px 20px 30px 45px; }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .metric-bubble { border-radius: 20px; aspect-ratio: auto; padding: 16px; }
+  .sticky-grid { grid-template-columns: 1fr; }
+  .sticker-collection { grid-template-columns: 1fr; }
+  .header__chips { gap: 8px; }
+  .chip { font-size: 0.75rem; padding: 3px 10px; }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+.wiggle-hover:hover { animation: wiggle 0.3s ease-in-out 2; }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ========== HEADER ========== -->
+  <header class="header" style="position: relative;">
+    <!-- Scattered doodle stickers -->
+    <span class="header__deco" style="top: 10px; left: 5%; transform: rotate(-15deg);">&#x1F9D7;</span>
+    <span class="header__deco" style="top: 0; right: 8%; transform: rotate(20deg);">&#x1F525;</span>
+    <span class="header__deco" style="bottom: 10px; left: 15%; transform: rotate(10deg); font-size: 1.5rem;">&#x26A1;</span>
+    <span class="header__deco" style="bottom: 0; right: 12%; transform: rotate(-8deg); font-size: 1.8rem;">&#x1F919;</span>
+
+    <!-- SVG chalk bag doodle -->
+    <svg style="position:absolute; top: 20px; right: 2%; opacity: 0.25; width: 80px; pointer-events:none;" viewBox="0 0 80 100" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M25 35 Q20 30 22 20 Q30 10 40 8 Q50 10 58 20 Q60 30 55 35"/>
+      <rect x="22" y="35" width="36" height="45" rx="4"/>
+      <path d="M22 50 Q40 58 58 50"/>
+      <line x1="35" y1="8" x2="32" y2="2"/>
+      <line x1="45" y1="8" x2="48" y2="2"/>
+      <path d="M32 2 Q40 -2 48 2"/>
+    </svg>
+
+    <!-- SVG carabiner doodle -->
+    <svg style="position:absolute; top: 40px; left: 3%; opacity: 0.2; width: 50px; pointer-events:none;" viewBox="0 0 50 80" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round">
+      <path d="M15 15 Q10 5 25 5 Q40 5 35 15 L35 55 Q35 70 25 70 Q15 70 15 55 Z"/>
+      <line x1="35" y1="20" x2="35" y2="40"/>
+      <path d="M35 20 Q42 20 42 30 Q42 40 35 40"/>
+    </svg>
+
+    <!-- SVG climbing shoe doodle -->
+    <svg style="position:absolute; bottom: -10px; left: 45%; opacity: 0.15; width: 70px; pointer-events:none;" viewBox="0 0 60 40" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 30 Q5 15 15 12 Q25 9 30 12 L45 18 Q55 22 55 28 L55 32 Q50 35 5 35 Z"/>
+      <path d="M45 18 Q48 15 50 18"/>
+      <line x1="15" y1="30" x2="50" y2="30"/>
+    </svg>
+
+    <h1 class="header__title">OpenCrux</h1>
+    <p class="header__subtitle">upload ur beta. get roasted by robots. send harder. &#x1F9D7;</p>
+
+    <div class="header__chips">
+      <span class="chip" style="background: var(--pink); color: white; transform: rotate(-2deg);">POSE AI</span>
+      <span class="chip" style="background: var(--lime); transform: rotate(1deg);">VIDEO ANALYSIS</span>
+      <span class="chip" style="background: var(--cyan); transform: rotate(-1deg);">BETA SPRAY</span>
+      <span class="chip" style="background: var(--orange); color: white; transform: rotate(2deg);">SEND TRAIN</span>
+      <span class="chip" style="background: var(--black); color: var(--lime); transform: rotate(-1.5deg);">V0-V17</span>
+    </div>
+  </header>
+
+  <!-- ========== UPLOAD ========== -->
+  <section class="upload-section">
+    <div class="notebook-page tape">
+      <h2 class="upload-title">YEET YOUR BETA &#x1F4F9;</h2>
+      <p class="upload-subtitle">drop a boulder vid and let the robots figure out if you actually sent it or just flailed around</p>
+
+      <div class="upload-dropzone wiggle-hover">
+        <span class="upload-dropzone__icon">&#x1F4C1;</span>
+        <span class="upload-dropzone__text">drag &amp; drop ur vid here</span>
+        <span class="upload-dropzone__hint">or click, whatever. mp4/mov/webm</span>
+      </div>
+
+      <button class="btn-send">SEND IT &#x1F525;</button>
+    </div>
+  </section>
+
+  <!-- ========== VERDICT ========== -->
+  <section class="verdict-section">
+    <h2 class="section-heading" style="transform: rotate(1deg);">THE VERDICT &#x1F3AF;</h2>
+    <br>
+    <div class="verdict-sticker wiggle-hover" id="verdict-sticker">
+      SENT IT &#x2705;
+    </div>
+    <p class="verdict-detail">
+      reliability: <strong>READY</strong> &mdash; single clean attempt detected &mdash; no sketch found
+    </p>
+  </section>
+
+  <!-- ========== FRAME PREVIEW ========== -->
+  <section class="frame-section">
+    <div class="polaroid tape">
+      <div class="polaroid__image">
+        <div class="polaroid__image-inner">
+          <!-- Mock wall holds -->
+          <span class="hold" style="width:12px;height:12px;background:#e74c3c;top:15%;left:20%;"></span>
+          <span class="hold" style="width:10px;height:10px;background:#f39c12;top:25%;left:55%;"></span>
+          <span class="hold" style="width:14px;height:14px;background:#2ecc71;top:40%;left:35%;"></span>
+          <span class="hold" style="width:10px;height:10px;background:#e74c3c;top:55%;left:65%;"></span>
+          <span class="hold" style="width:12px;height:12px;background:#f39c12;top:65%;left:25%;"></span>
+          <span class="hold" style="width:16px;height:16px;background:#e74c3c;top:10%;left:45%;"></span>
+          <span class="hold" style="width:8px;height:8px;background:#2ecc71;top:50%;left:15%;"></span>
+          <span class="hold" style="width:11px;height:11px;background:#f39c12;top:75%;left:50%;"></span>
+
+          <!-- Climber -->
+          <div class="climber-figure" style="margin-top: -20px;">
+            <div class="climber-figure__head"></div>
+            <div style="position:relative;">
+              <div class="climber-figure__arm-l"></div>
+              <div class="climber-figure__arm-r"></div>
+              <div class="climber-figure__body"></div>
+              <div class="climber-figure__leg-l"></div>
+              <div class="climber-figure__leg-r"></div>
+            </div>
+          </div>
+
+          <span class="polaroid__overlay">FRAME 127 / 254 &bull; 0:04.23</span>
+        </div>
+      </div>
+      <span class="polaroid__caption">nice send bro &#x1F919;</span>
+      <span class="polaroid__frame-num">boulder_proj_03.mp4</span>
+    </div>
+  </section>
+
+  <!-- ========== DIAGNOSTICS ========== -->
+  <section class="diagnostics-section">
+    <h2 class="section-heading">DIAGNOSTIC DEETS &#x1F50D;</h2>
+
+    <div class="sticky-grid">
+      <div class="sticky-note sticky-note--yellow" style="transform: rotate(-2deg);">
+        <div class="sticky-note__title">Video Stats</div>
+        <div class="sticky-note__value">
+          FPS: 30<br>
+          Frames: 254<br>
+          Duration: 8.48s<br>
+          Res: 1080x1920
+        </div>
+        <span class="sticky-note__check">&#x1F4CA;</span>
+      </div>
+
+      <div class="sticky-note sticky-note--blue" style="transform: rotate(1.5deg);">
+        <div class="sticky-note__title">Pose Detection</div>
+        <div class="sticky-note__value">
+          Model: MoveNet Thunder<br>
+          Confidence: 0.891<br>
+          Keypoints: 17/17<br>
+          Dropout: 2 frames
+        </div>
+        <span class="sticky-note__check">&#x1F9B4;</span>
+      </div>
+
+      <div class="sticky-note sticky-note--pink" style="transform: rotate(-1deg);">
+        <div class="sticky-note__title">Wall Detection</div>
+        <div class="sticky-note__value">
+          Method: vertical-flow<br>
+          Wall angle: 4.2&deg;<br>
+          Confidence: HIGH<br>
+          Stable: yes
+        </div>
+        <span class="sticky-note__check">&#x1F9F1;</span>
+      </div>
+
+      <div class="sticky-note sticky-note--green" style="transform: rotate(2deg);">
+        <div class="sticky-note__title">Processing</div>
+        <div class="sticky-note__value">
+          Analysis: 3.2s<br>
+          Pose model: 1.8s<br>
+          Total: 5.1s<br>
+          Status: CLEAN
+        </div>
+        <span class="sticky-note__check">&#x26A1;</span>
+      </div>
+
+      <div class="sticky-note sticky-note--orange" style="transform: rotate(-1.5deg);">
+        <div class="sticky-note__title">Attempt Detect</div>
+        <div class="sticky-note__value">
+          Method: vertical-peak<br>
+          Threshold: 0.15<br>
+          Smoothing: 5-frame<br>
+          Attempts: 1
+        </div>
+        <span class="sticky-note__check">&#x1F3AF;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== METRICS ========== -->
+  <section class="metrics-section">
+    <h2 class="section-heading" style="transform: rotate(-1.5deg);">THE NUMBERS &#x1F4D0;</h2>
+
+    <div class="metrics-grid">
+      <div class="metric-bubble metric-bubble--pink" style="transform: rotate(-2deg);">
+        <span class="metric-bubble__emoji">&#x1F3AF;</span>
+        <span class="metric-bubble__number">1</span>
+        <span class="metric-bubble__label">Attempts</span>
+      </div>
+
+      <div class="metric-bubble metric-bubble--lime" style="transform: rotate(1deg);">
+        <span class="metric-bubble__emoji">&#x23F1;&#xFE0F;</span>
+        <span class="metric-bubble__number">8.48s</span>
+        <span class="metric-bubble__label">Time on Wall</span>
+      </div>
+
+      <div class="metric-bubble" style="transform: rotate(-1deg);">
+        <span class="metric-bubble__emoji">&#x1F634;</span>
+        <span class="metric-bubble__number">0.00s</span>
+        <span class="metric-bubble__label">Rest Time</span>
+      </div>
+
+      <div class="metric-bubble metric-bubble--orange" style="transform: rotate(2.5deg);">
+        <span class="metric-bubble__emoji">&#x1F4C8;</span>
+        <span class="metric-bubble__number">0.223</span>
+        <span class="metric-bubble__label">Vertical Progress</span>
+      </div>
+
+      <div class="metric-bubble metric-bubble--cyan" style="transform: rotate(-1.5deg);">
+        <span class="metric-bubble__emoji">&#x1F441;&#xFE0F;</span>
+        <span class="metric-bubble__number">0.891</span>
+        <span class="metric-bubble__label">Visibility</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WARNINGS ========== -->
+  <section class="warnings-section">
+    <div class="warning-sticker wiggle-hover">
+      NO SKETCH DETECTED &#x1F919;
+    </div>
+    <p style="margin-top: 14px; font-family: 'Courier Prime', monospace; font-size: 0.9rem; color: #666; transform: rotate(0.5deg);">
+      0 warnings &bull; 0 cautions &bull; clean as a fresh chalk bag
+    </p>
+  </section>
+
+  <!-- ========== ATTEMPTS TIMELINE ========== -->
+  <section class="attempts-section">
+    <h2 class="section-heading" style="transform: rotate(1deg);">THE SEND &#x1F9D7;</h2>
+
+    <div class="timeline">
+      <div class="timeline-event timeline-event--send" style="transform: rotate(-0.5deg);">
+        <div class="timeline-event__title">Attempt #1 &mdash; THE FLASH &#x26A1;</div>
+        <div class="timeline-event__detail">
+          Start: 0.00s &bull; End: 8.48s &bull; Duration: 8.48s<br>
+          Peak height: 0.223 &bull; Avg visibility: 0.891
+        </div>
+        <span class="timeline-event__tag" style="background: var(--lime);">TOPPED &#x1F525;</span>
+      </div>
+
+      <div class="timeline-event" style="transform: rotate(0.5deg);">
+        <div class="timeline-event__title">Summary</div>
+        <div class="timeline-event__detail">
+          Total attempts: 1 &bull; Success rate: 100%<br>
+          Total climbing time: 8.48s &bull; Total rest: 0.00s<br>
+          Flash? YES. First try send. Respect. &#x1FAE1;
+        </div>
+        <span class="timeline-event__tag" style="background: var(--cyan);">CLEAN &#x1F9F9;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== AI / ROBO-BETA ========== -->
+  <section class="ai-section">
+    <div class="robo-sticker wiggle-hover">
+      <div class="robo-sticker__badge">SOON&#x2122;</div>
+      <h2 class="robo-sticker__title">ROBO-BETA &#x1F916;</h2>
+      <p class="robo-sticker__body">
+        AI-powered move-by-move breakdown<br>
+        <span class="mono" style="color: var(--cyan);">analyzing_beta<span class="blink">_</span></span><br><br>
+        "yo we're teaching the robots to read beta<br>
+        so you don't have to think. stay tuned."
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== HISTORY / STICKER COLLECTION ========== -->
+  <section class="history-section">
+    <h2 class="section-heading" style="transform: rotate(-1deg);">STICKER COLLECTION &#x1F3F7;&#xFE0F;</h2>
+    <p style="margin-bottom: 24px; color: #666;">your climbing vids, immortalized as stickers. peel at your own risk.</p>
+
+    <div class="sticker-collection">
+
+      <div class="history-card" style="background: #fff9c4; transform: rotate(-2deg);">
+        <span class="history-card__verdict history-card__verdict--sent">SENT &#x2705;</span>
+        <div class="history-card__name">gym_moonboard_v5.mp4</div>
+        <div class="history-card__date">2026-04-03 &bull; 18:42</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">1 att</span>
+          <span class="history-card__stat">12.3s</span>
+          <span class="history-card__stat">vis 0.92</span>
+        </div>
+      </div>
+
+      <div class="history-card" style="background: #f8bbd0; transform: rotate(1.5deg);">
+        <span class="history-card__verdict history-card__verdict--sketch">SKETCHY &#x1F62C;</span>
+        <div class="history-card__name">outdoor_bishop_v7.mov</div>
+        <div class="history-card__date">2026-04-01 &bull; 14:15</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">4 att</span>
+          <span class="history-card__stat">47.1s</span>
+          <span class="history-card__stat">vis 0.63</span>
+        </div>
+      </div>
+
+      <div class="history-card" style="background: #b3e5fc; transform: rotate(-1deg);">
+        <span class="history-card__verdict history-card__verdict--sent">SENT &#x2705;</span>
+        <div class="history-card__name">proj_roof_crack.mp4</div>
+        <div class="history-card__date">2026-03-28 &bull; 20:05</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">2 att</span>
+          <span class="history-card__stat">22.8s</span>
+          <span class="history-card__stat">vis 0.87</span>
+        </div>
+      </div>
+
+      <div class="history-card" style="background: #c8e6c9; transform: rotate(2.5deg);">
+        <span class="history-card__verdict history-card__verdict--bail">BAILED &#x1F480;</span>
+        <div class="history-card__name">hueco_warmup_v3.mp4</div>
+        <div class="history-card__date">2026-03-25 &bull; 09:30</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">6 att</span>
+          <span class="history-card__stat">1:34</span>
+          <span class="history-card__stat">vis 0.71</span>
+        </div>
+      </div>
+
+      <div class="history-card" style="background: #ffe0b2; transform: rotate(-1.5deg);">
+        <span class="history-card__verdict history-card__verdict--sent">SENT &#x2705;</span>
+        <div class="history-card__name">comp_finals_w4.webm</div>
+        <div class="history-card__date">2026-03-20 &bull; 16:55</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">1 att</span>
+          <span class="history-card__stat">9.7s</span>
+          <span class="history-card__stat">vis 0.95</span>
+        </div>
+      </div>
+
+      <div class="history-card" style="background: #e1bee7; transform: rotate(1deg);">
+        <span class="history-card__verdict history-card__verdict--sketch">SKETCHY &#x1F62C;</span>
+        <div class="history-card__name">slab_nightmare_v6.mp4</div>
+        <div class="history-card__date">2026-03-18 &bull; 11:20</div>
+        <div class="history-card__stats">
+          <span class="history-card__stat">3 att</span>
+          <span class="history-card__stat">38.5s</span>
+          <span class="history-card__stat">vis 0.58</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="footer__sticker">CLIMB HARD. SEND HARDER. &#x1F918;</div>
+    <p style="margin-top: 12px;">
+      opencrux v0.1.0-punk &bull; not affiliated with your gym's spray wall<br>
+      made with chalk dust &amp; bad decisions &bull; 2026
+    </p>
+
+    <!-- Shoe doodle -->
+    <svg style="display: inline-block; width: 50px; margin-top: 10px; opacity: 0.3;" viewBox="0 0 60 40" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 30 Q5 15 15 12 Q25 9 30 12 L45 18 Q55 22 55 28 L55 32 Q50 35 5 35 Z"/>
+      <path d="M45 18 Q48 15 50 18"/>
+      <line x1="15" y1="30" x2="50" y2="30"/>
+    </svg>
+  </footer>
+
+</div>
+
+<!-- ============================================
+     JAVASCRIPT: Entrance animations + interactivity
+     ============================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // Staggered entrance for sections
+  var sections = document.querySelectorAll('section, .header');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = entry.target.dataset.rot || 'none';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  sections.forEach(function(s, i) {
+    s.style.opacity = '0';
+    s.style.transition = 'opacity 0.6s ' + (i * 0.08) + 's ease-out';
+    observer.observe(s);
+  });
+
+  // Fallback: make everything visible after 2s
+  setTimeout(function() {
+    sections.forEach(function(s) { s.style.opacity = '1'; });
+  }, 2000);
+
+  // Upload dropzone hover effect
+  var dropzone = document.querySelector('.upload-dropzone');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(function(evt) {
+      dropzone.addEventListener(evt, function(e) {
+        e.preventDefault();
+        dropzone.style.background = 'rgba(184, 255, 0, 0.2)';
+        dropzone.style.borderColor = '#b8ff00';
+      });
+    });
+    ['dragleave', 'drop'].forEach(function(evt) {
+      dropzone.addEventListener(evt, function(e) {
+        e.preventDefault();
+        dropzone.style.background = '';
+        dropzone.style.borderColor = '';
+      });
+    });
+  }
+
+  // Send button click (mock)
+  var sendBtn = document.querySelector('.btn-send');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', function() {
+      sendBtn.textContent = 'SENDING... \uD83D\uDE80';
+      sendBtn.style.background = '#ff6600';
+      setTimeout(function() {
+        sendBtn.textContent = 'SENT! CHECK BELOW \uD83D\uDC47';
+        sendBtn.style.background = '#b8ff00';
+        sendBtn.style.color = '#111';
+      }, 1500);
+      setTimeout(function() {
+        sendBtn.textContent = 'SEND IT \uD83D\uDD25';
+        sendBtn.style.background = '#ff1493';
+        sendBtn.style.color = '#fff';
+      }, 4000);
+    });
+  }
+
+  // History card hover effects
+  document.querySelectorAll('.history-card').forEach(function(card) {
+    card.addEventListener('mouseenter', function() {
+      card.style.boxShadow = '8px 8px 4px rgba(0,0,0,0.2)';
+    });
+    card.addEventListener('mouseleave', function() {
+      card.style.boxShadow = '';
+    });
+  });
+
+  // Verdict sticker click easter egg
+  var verdict = document.getElementById('verdict-sticker');
+  if (verdict) {
+    var clicks = 0;
+    var messages = [
+      'SENT IT \u2705',
+      'CRUSHED IT \uD83D\uDCAA',
+      'ABSOLUTELY DEMOLISHED \uD83D\uDD25',
+      'FLASHED. NO CAP. \u26A1',
+      'V17 IN MY GYM \uD83C\uDFC6',
+    ];
+    verdict.addEventListener('click', function() {
+      clicks = (clicks + 1) % messages.length;
+      verdict.textContent = messages[clicks];
+      verdict.style.transform = 'rotate(' + (-3 + Math.random() * 6) + 'deg)';
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>

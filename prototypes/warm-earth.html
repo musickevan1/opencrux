@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCrux -- Climbing Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Libre+Franklin:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   RESET & FOUNDATION
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1614;
+  --bg-raised: #211e1b;
+  --bg-sunken: #141210;
+  --card-bg: rgba(194,168,130,0.06);
+  --card-border: rgba(194,168,130,0.12);
+  --card-border-hover: rgba(194,168,130,0.22);
+  --primary: #e8722a;
+  --primary-glow: rgba(232,114,42,0.15);
+  --success: #7c9a5e;
+  --success-muted: rgba(124,154,94,0.12);
+  --warning: #d4a053;
+  --warning-muted: rgba(212,160,83,0.12);
+  --danger: #c44b3a;
+  --danger-muted: rgba(196,75,58,0.12);
+  --text: #f5f0e8;
+  --text-secondary: #a89f94;
+  --text-muted: #6e665d;
+  --sandstone: #c2a882;
+  --sandstone-muted: rgba(194,168,130,0.25);
+  --rope: #8b7355;
+
+  --font-body: 'Libre Franklin', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================================
+   TOPOGRAPHIC BACKGROUND
+   ========================================================= */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cdefs%3E%3Cstyle%3Epath%7Bfill:none;stroke:%23c2a882;stroke-width:0.8%7D%3C/style%3E%3C/defs%3E%3Cpath d='M0 300c60-40 120-80 200-60s160 100 200 60 120-120 200-100'/%3E%3Cpath d='M0 340c70-30 130-70 210-50s150 90 190 50 110-110 200-90'/%3E%3Cpath d='M0 380c80-20 140-60 220-40s140 80 180 40 100-100 200-80'/%3E%3Cpath d='M0 260c50-50 110-90 190-70s170 110 210 70 130-130 200-110'/%3E%3Cpath d='M0 220c40-60 100-100 180-80s180 120 220 80 140-140 200-120'/%3E%3Cpath d='M0 180c30-70 90-110 170-90s190 130 230 90 150-150 200-130'/%3E%3Cpath d='M0 420c90-10 150-50 230-30s130 70 170 30 90-90 200-70'/%3E%3Cpath d='M0 460c100 0 160-40 240-20s120 60 160 20 80-80 200-60'/%3E%3Cpath d='M0 140c20-80 80-120 160-100s200 140 240 100 160-160 200-140'/%3E%3Cpath d='M0 100c10-90 70-130 150-110s210 150 250 110 170-170 200-150'/%3E%3Cpath d='M0 500c110 10 170-30 250-10s110 50 150 10 70-70 200-50'/%3E%3Cpath d='M0 540c120 20 180-20 260 0s100 40 140 0 60-60 200-40'/%3E%3Cpath d='M0 60c0-100 60-140 140-120s220 160 260 120 180-180 200-160'/%3E%3C/svg%3E");
+  background-size: 600px 600px;
+}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (min-width: 768px) {
+  .container { padding: 0 32px; }
+}
+
+@media (min-width: 1280px) {
+  .container { padding: 0 48px; }
+}
+
+/* =========================================================
+   CARD BASE
+   ========================================================= */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Chalk-dusted paper texture */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(194,168,130,0.008) 3px,
+    rgba(194,168,130,0.008) 4px
+  );
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+/* =========================================================
+   ROPE DIVIDER
+   ========================================================= */
+.rope-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 40px 0;
+  opacity: 0.4;
+}
+
+.rope-divider::before,
+.rope-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--rope) 0px,
+    var(--rope) 8px,
+    transparent 8px,
+    transparent 12px,
+    var(--sandstone-muted) 12px,
+    var(--sandstone-muted) 20px,
+    transparent 20px,
+    transparent 24px
+  );
+}
+
+.rope-divider .rope-knot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rope);
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   SECTION LABELS
+   ========================================================= */
+.section-label {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 16px;
+  letter-spacing: 0.01em;
+}
+
+.section-sublabel {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+/* =========================================================
+   1. HERO / MASTHEAD
+   ========================================================= */
+.hero {
+  padding: 48px 0 32px;
+  text-align: center;
+}
+
+.hero-logo {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.hero-logo .crux {
+  color: var(--primary);
+}
+
+.hero-tagline {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  margin-bottom: 24px;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.chip .chip-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.chip .chip-dot.warning { background: var(--warning); }
+.chip .chip-dot.orange { background: var(--primary); }
+
+@media (min-width: 768px) {
+  .hero { padding: 64px 0 40px; }
+  .hero-logo { font-size: 4rem; }
+  .hero-tagline { font-size: 1.1rem; }
+}
+
+/* =========================================================
+   2. UPLOAD FORM
+   ========================================================= */
+.upload-card {
+  max-width: 600px;
+  margin: 0 auto 0;
+}
+
+.upload-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.upload-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--primary-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--primary);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.upload-card .card-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+  background: rgba(194,168,130,0.02);
+}
+
+.upload-dropzone:hover {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.upload-dropzone-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.upload-dropzone-text strong {
+  color: var(--primary);
+}
+
+.upload-dropzone-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: var(--font-mono);
+}
+
+.upload-btn {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.upload-btn:hover {
+  background: #d4651f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(232,114,42,0.3);
+}
+
+.upload-btn:hover::after {
+  transform: translateX(100%);
+}
+
+/* =========================================================
+   3. VERDICT BAND
+   ========================================================= */
+.verdict-band {
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.verdict-band.supported {
+  background: var(--success);
+}
+
+.verdict-band.partial {
+  background: var(--warning);
+}
+
+.verdict-band.unsupported {
+  background: var(--danger);
+}
+
+.verdict-label {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+.verdict-badge .check {
+  width: 14px;
+  height: 14px;
+}
+
+/* =========================================================
+   4 & 5. FRAME PREVIEW + DIAGNOSTICS (GRID)
+   ========================================================= */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .analysis-grid {
+    grid-template-columns: 1fr 300px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .analysis-grid {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+/* FRAME PREVIEW */
+.frame-preview {
+  background: var(--bg-sunken);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+}
+
+.frame-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  background: rgba(194,168,130,0.03);
+}
+
+.frame-filename {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--sandstone);
+}
+
+.frame-session-id {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.frame-canvas {
+  aspect-ratio: 16/9;
+  background: #0d0b0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.frame-canvas-skeleton {
+  position: relative;
+  width: 120px;
+  height: 200px;
+}
+
+/* Stick-figure skeleton joints */
+.skeleton-joint {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary), 0 0 16px rgba(232,114,42,0.3);
+  z-index: 2;
+}
+
+.joint-head { top: 0; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; }
+.joint-neck { top: 22px; left: 50%; transform: translateX(-50%); }
+.joint-lshoulder { top: 36px; left: 15%; }
+.joint-rshoulder { top: 36px; right: 15%; }
+.joint-lelbow { top: 16px; left: 0%; }
+.joint-relbow { top: 10px; right: 0%; }
+.joint-lwrist { top: 0; left: 5%; width: 6px; height: 6px; }
+.joint-rwrist { top: 0; right: 10%; width: 6px; height: 6px; }
+.joint-lhip { top: 80px; left: 28%; }
+.joint-rhip { top: 80px; right: 28%; }
+.joint-lknee { top: 125px; left: 20%; }
+.joint-rknee { top: 125px; right: 20%; }
+.joint-lankle { top: 170px; left: 18%; width: 6px; height: 6px; }
+.joint-rankle { top: 170px; right: 22%; width: 6px; height: 6px; }
+
+.frame-overlay-label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.6);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.frame-overlay-frame {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--primary);
+  background: rgba(0,0,0,0.6);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.frame-timeline {
+  padding: 12px 16px;
+  border-top: 1px solid var(--card-border);
+  background: rgba(194,168,130,0.03);
+}
+
+.timeline-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(194,168,130,0.1);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.timeline-progress {
+  width: 62%;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  position: relative;
+  transition: width 0.2s ease;
+}
+
+.timeline-thumb {
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px rgba(232,114,42,0.4);
+}
+
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* DIAGNOSTICS SIDEBAR */
+.diagnostics-card .section-label {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.diag-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(194,168,130,0.06);
+}
+
+.diag-item:last-child {
+  border-bottom: none;
+}
+
+.diag-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.diag-value {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.diag-value.success { color: var(--success); }
+.diag-value.warning { color: var(--warning); }
+.diag-value.danger { color: var(--danger); }
+
+.diag-bar-container {
+  margin-top: 4px;
+}
+
+.diag-bar {
+  height: 3px;
+  background: rgba(194,168,130,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.diag-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+
+.diag-bar-fill.success { background: var(--success); }
+.diag-bar-fill.warning { background: var(--warning); }
+.diag-bar-fill.primary { background: var(--primary); }
+
+/* =========================================================
+   6. METRICS GRID
+   ========================================================= */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .metrics-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.metric-card {
+  text-align: center;
+  padding: 20px 14px;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.1;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.metric-value::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: var(--sandstone-muted);
+  border-radius: 1px;
+}
+
+.metric-value.accent-primary::after { background: var(--primary); opacity: 0.6; }
+.metric-value.accent-success::after { background: var(--success); opacity: 0.6; }
+.metric-value.accent-warning::after { background: var(--warning); opacity: 0.6; }
+
+.metric-unit {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* =========================================================
+   7. WARNINGS CARD
+   ========================================================= */
+.warnings-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.warnings-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--success-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.warnings-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--success);
+  fill: none;
+  stroke-width: 2;
+}
+
+.warnings-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.warnings-text strong {
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* =========================================================
+   8. EVIDENCE / ATTEMPTS CARD
+   ========================================================= */
+.attempts-list {
+  list-style: none;
+}
+
+.attempt-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(194,168,130,0.06);
+}
+
+.attempt-item:last-child { border-bottom: none; }
+
+.attempt-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-glow);
+  border: 1px solid rgba(232,114,42,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.attempt-details {
+  flex: 1;
+}
+
+.attempt-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.attempt-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.attempt-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.attempt-status {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.attempt-status.completed {
+  background: var(--success-muted);
+  color: var(--success);
+}
+
+.attempt-status.fall {
+  background: var(--warning-muted);
+  color: var(--warning);
+}
+
+/* =========================================================
+   9. AI INSIGHTS (DISABLED)
+   ========================================================= */
+.ai-insights-card {
+  position: relative;
+}
+
+.ai-insights-card .card-content {
+  opacity: 0.3;
+  filter: blur(1px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.ai-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  border-radius: var(--radius);
+  background: rgba(26,22,20,0.5);
+  backdrop-filter: blur(2px);
+}
+
+.ai-lock-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(194,168,130,0.08);
+  border: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.ai-lock-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 2;
+}
+
+.ai-overlay-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 240px;
+}
+
+.ai-overlay-text strong {
+  color: var(--text);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ai-insights-placeholder-line {
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(194,168,130,0.1);
+  margin-bottom: 10px;
+}
+
+.ai-insights-placeholder-line:nth-child(1) { width: 90%; }
+.ai-insights-placeholder-line:nth-child(2) { width: 75%; }
+.ai-insights-placeholder-line:nth-child(3) { width: 85%; }
+.ai-insights-placeholder-line:nth-child(4) { width: 60%; }
+.ai-insights-placeholder-line:nth-child(5) { width: 70%; }
+.ai-insights-placeholder-line:nth-child(6) { width: 45%; }
+
+/* =========================================================
+   10. HISTORY SHELF
+   ========================================================= */
+.history-shelf {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .history-shelf {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .history-shelf {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.history-card {
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: 0 6px 24px rgba(232,114,42,0.12);
+}
+
+.history-card-grade {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.history-card-grade.easy { color: var(--success); }
+.history-card-grade.mid { color: var(--warning); }
+.history-card-grade.hard { color: var(--danger); }
+.history-card-grade.project { color: var(--primary); }
+
+.history-card-name {
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-card-meta {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-card-verdict {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.history-card-verdict.supported {
+  background: var(--success-muted);
+  color: var(--success);
+}
+
+.history-card-verdict.partial {
+  background: var(--warning-muted);
+  color: var(--warning);
+}
+
+.history-card-verdict.unsupported {
+  background: var(--danger-muted);
+  color: var(--danger);
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.footer {
+  padding: 40px 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.footer a {
+  color: var(--sandstone);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--primary);
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 6px var(--primary), 0 0 12px rgba(232,114,42,0.2); }
+  50% { box-shadow: 0 0 10px var(--primary), 0 0 20px rgba(232,114,42,0.35); }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.animate-in {
+  animation: fadeUp 0.5s ease both;
+}
+
+.skeleton-joint {
+  animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
+.skeleton-joint:nth-child(odd) {
+  animation-delay: 0.3s;
+}
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+.stagger-9 { animation-delay: 0.45s; }
+.stagger-10 { animation-delay: 0.5s; }
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(194,168,130,0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(194,168,130,0.25);
+}
+
+/* =========================================================
+   TWO-COLUMN UTILITY
+   ========================================================= */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== 1. HERO / MASTHEAD ===== -->
+  <header class="hero animate-in stagger-1">
+    <div class="hero-logo">Open<span class="crux">Crux</span></div>
+    <p class="hero-tagline">Local-first climbing analysis</p>
+    <div class="hero-chips">
+      <span class="chip"><span class="chip-dot"></span> MediaPipe Pose</span>
+      <span class="chip"><span class="chip-dot warning"></span> Offline Ready</span>
+      <span class="chip"><span class="chip-dot orange"></span> Privacy First</span>
+      <span class="chip"><span class="chip-dot"></span> Bouldering</span>
+    </div>
+  </header>
+
+  <!-- ===== 2. UPLOAD FORM ===== -->
+  <div class="upload-card card animate-in stagger-2">
+    <div class="card-header">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="card-title">Upload Session Video</div>
+    </div>
+    <div class="upload-dropzone">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <div class="upload-dropzone-text">Drop your video here or <strong>browse</strong></div>
+      <div class="upload-dropzone-hint">.mp4, .mov, .webm &mdash; max 500 MB</div>
+    </div>
+    <button class="upload-btn">Analyze Session</button>
+  </div>
+
+  <div class="rope-divider animate-in stagger-3">
+    <span class="rope-knot"></span>
+  </div>
+
+  <!-- ===== 3. VERDICT BAND ===== -->
+  <div class="verdict-band supported animate-in stagger-3">
+    <div class="verdict-label">Supported Run</div>
+    <span class="verdict-badge">
+      <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      All checks passed
+    </span>
+  </div>
+
+  <!-- ===== 4 & 5. FRAME PREVIEW + DIAGNOSTICS ===== -->
+  <div class="analysis-grid animate-in stagger-4">
+
+    <!-- Frame Preview -->
+    <div class="frame-preview">
+      <div class="frame-preview-header">
+        <span class="frame-filename">known-good.mp4</span>
+        <span class="frame-session-id">sess_a7f3c012</span>
+      </div>
+      <div class="frame-canvas">
+        <div class="frame-canvas-skeleton" id="skeleton-figure">
+          <div class="skeleton-joint joint-head"></div>
+          <div class="skeleton-joint joint-neck"></div>
+          <div class="skeleton-joint joint-lshoulder"></div>
+          <div class="skeleton-joint joint-rshoulder"></div>
+          <div class="skeleton-joint joint-lelbow"></div>
+          <div class="skeleton-joint joint-relbow"></div>
+          <div class="skeleton-joint joint-lwrist"></div>
+          <div class="skeleton-joint joint-rwrist"></div>
+          <div class="skeleton-joint joint-lhip"></div>
+          <div class="skeleton-joint joint-rhip"></div>
+          <div class="skeleton-joint joint-lknee"></div>
+          <div class="skeleton-joint joint-rknee"></div>
+          <div class="skeleton-joint joint-lankle"></div>
+          <div class="skeleton-joint joint-rankle"></div>
+        </div>
+        <span class="frame-overlay-label">MediaPipe Pose</span>
+        <span class="frame-overlay-frame">Frame 127 / 204</span>
+      </div>
+      <div class="frame-timeline">
+        <div class="timeline-bar" id="timeline-bar">
+          <div class="timeline-progress" id="timeline-progress">
+            <div class="timeline-thumb"></div>
+          </div>
+        </div>
+        <div class="timeline-labels">
+          <span>00:05.26</span>
+          <span>00:08.48</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostics Sidebar -->
+    <div class="card diagnostics-card">
+      <div class="section-label">Diagnostics</div>
+      <div class="diag-item">
+        <span class="diag-label">Resolution</span>
+        <span class="diag-value">1920 &times; 1080</span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">Frame Rate</span>
+        <span class="diag-value">30 fps</span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">Duration</span>
+        <span class="diag-value">8.48<span style="color:var(--text-muted);font-size:0.7rem">s</span></span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">Total Frames</span>
+        <span class="diag-value">204</span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">Pose Confidence</span>
+        <span class="diag-value success">0.94</span>
+      </div>
+      <div class="diag-bar-container">
+        <div class="diag-bar"><div class="diag-bar-fill success" style="width:94%"></div></div>
+      </div>
+      <div class="diag-item" style="margin-top:4px;">
+        <span class="diag-label">Visibility Score</span>
+        <span class="diag-value success">0.891</span>
+      </div>
+      <div class="diag-bar-container">
+        <div class="diag-bar"><div class="diag-bar-fill success" style="width:89.1%"></div></div>
+      </div>
+      <div class="diag-item" style="margin-top:4px;">
+        <span class="diag-label">Tracking Loss</span>
+        <span class="diag-value success">0 frames</span>
+      </div>
+      <div class="diag-item">
+        <span class="diag-label">Model</span>
+        <span class="diag-value" style="font-size:0.72rem;">BlazePose Heavy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rope-divider animate-in stagger-5">
+    <span class="rope-knot"></span>
+  </div>
+
+  <!-- ===== 6. METRICS GRID ===== -->
+  <div class="animate-in stagger-5">
+    <div class="section-sublabel">Session Metrics</div>
+    <div class="metrics-grid">
+      <div class="card metric-card">
+        <div class="metric-value accent-primary">1</div>
+        <div class="metric-label">Attempts</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value accent-success">8.48<span class="metric-unit">s</span></div>
+        <div class="metric-label">Time on Wall</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value">0.00<span class="metric-unit">s</span></div>
+        <div class="metric-label">Avg Rest</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value accent-warning">0.223</div>
+        <div class="metric-label">Vertical Progress</div>
+      </div>
+      <div class="card metric-card">
+        <div class="metric-value accent-success">0.891</div>
+        <div class="metric-label">Visibility</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rope-divider animate-in stagger-6">
+    <span class="rope-knot"></span>
+  </div>
+
+  <!-- ===== 7 & 8. WARNINGS + ATTEMPTS ===== -->
+  <div class="two-col animate-in stagger-6">
+
+    <!-- Warnings -->
+    <div class="card warnings-card">
+      <div class="warnings-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="warnings-text">
+        <strong>No reliability warnings raised</strong>
+        All pose data passed confidence thresholds. Session integrity is intact.
+      </div>
+    </div>
+
+    <!-- Evidence / Attempts -->
+    <div class="card">
+      <div class="section-label" style="font-size:1rem;">Evidence &mdash; Attempts</div>
+      <ul class="attempts-list">
+        <li class="attempt-item">
+          <div class="attempt-number">1</div>
+          <div class="attempt-details">
+            <div class="attempt-label">Attempt 1</div>
+            <div class="attempt-meta">
+              <span>Start: 0.00s</span>
+              <span>End: 8.48s</span>
+              <span>Duration: 8.48s</span>
+            </div>
+          </div>
+          <div class="attempt-status completed">Completed</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rope-divider animate-in stagger-7">
+    <span class="rope-knot"></span>
+  </div>
+
+  <!-- ===== 9. AI INSIGHTS (DISABLED) ===== -->
+  <div class="card ai-insights-card animate-in stagger-7">
+    <div class="ai-overlay">
+      <div class="ai-lock-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div class="ai-overlay-text">
+        <strong>AI Insights</strong>
+        Connect an LLM provider to unlock AI-powered movement analysis and technique suggestions.
+      </div>
+    </div>
+    <div class="card-content">
+      <div class="section-label" style="font-size:1rem;">AI Movement Analysis</div>
+      <div style="margin-top:14px;">
+        <div class="ai-insights-placeholder-line"></div>
+        <div class="ai-insights-placeholder-line"></div>
+        <div class="ai-insights-placeholder-line"></div>
+        <div class="ai-insights-placeholder-line"></div>
+        <div class="ai-insights-placeholder-line"></div>
+        <div class="ai-insights-placeholder-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rope-divider animate-in stagger-8">
+    <span class="rope-knot"></span>
+  </div>
+
+  <!-- ===== 10. HISTORY SHELF ===== -->
+  <div class="animate-in stagger-9">
+    <div class="section-sublabel">Session History</div>
+    <div class="section-label">Recent Sessions</div>
+    <div class="history-shelf">
+
+      <div class="card history-card">
+        <div class="history-card-grade mid">V4</div>
+        <div class="history-card-name">Left Wall Traverse</div>
+        <div class="history-card-meta">
+          <span>3 attempts &bull; 24.3s</span>
+          <span>Apr 2, 2026</span>
+        </div>
+        <div class="history-card-verdict supported">Supported</div>
+      </div>
+
+      <div class="card history-card">
+        <div class="history-card-grade easy">V2</div>
+        <div class="history-card-name">Slab Warmup</div>
+        <div class="history-card-meta">
+          <span>1 attempt &bull; 12.1s</span>
+          <span>Apr 1, 2026</span>
+        </div>
+        <div class="history-card-verdict supported">Supported</div>
+      </div>
+
+      <div class="card history-card">
+        <div class="history-card-grade hard">V6</div>
+        <div class="history-card-name">Roof Crux Sequence</div>
+        <div class="history-card-meta">
+          <span>5 attempts &bull; 68.7s</span>
+          <span>Mar 30, 2026</span>
+        </div>
+        <div class="history-card-verdict partial">Partial</div>
+      </div>
+
+      <div class="card history-card">
+        <div class="history-card-grade project">V7</div>
+        <div class="history-card-name">Dyno Project</div>
+        <div class="history-card-meta">
+          <span>8 attempts &bull; 41.2s</span>
+          <span>Mar 28, 2026</span>
+        </div>
+        <div class="history-card-verdict unsupported">Unsupported</div>
+      </div>
+
+      <div class="card history-card">
+        <div class="history-card-grade mid">V4</div>
+        <div class="history-card-name">Overhang Comp</div>
+        <div class="history-card-meta">
+          <span>2 attempts &bull; 19.8s</span>
+          <span>Mar 26, 2026</span>
+        </div>
+        <div class="history-card-verdict supported">Supported</div>
+      </div>
+
+      <div class="card history-card">
+        <div class="history-card-grade easy">V3</div>
+        <div class="history-card-name">Crimpy Arete</div>
+        <div class="history-card-meta">
+          <span>1 attempt &bull; 9.4s</span>
+          <span>Mar 24, 2026</span>
+        </div>
+        <div class="history-card-verdict supported">Supported</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer animate-in stagger-10">
+    <div class="rope-divider" style="margin-bottom:24px;">
+      <span class="rope-knot"></span>
+    </div>
+    OpenCrux v0.1.0 &mdash; Local-first climbing analysis<br>
+    Built with <a href="#">MediaPipe</a> &bull; No data leaves your machine &bull; <a href="#">GitHub</a>
+  </footer>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Draw skeleton bone lines via SVG
+  const skeletonFigure = document.getElementById('skeleton-figure');
+  if (skeletonFigure) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 120 200');
+    svg.style.cssText = 'position:absolute;width:120px;height:200px;pointer-events:none;z-index:1;';
+
+    const bones = [
+      [60, 7, 60, 22],     // head to neck
+      [60, 26, 18, 40],    // neck to left shoulder
+      [60, 26, 102, 40],   // neck to right shoulder
+      [18, 40, 0, 20],     // left shoulder to left elbow
+      [102, 40, 120, 14],  // right shoulder to right elbow
+      [0, 20, 6, 4],       // left elbow to left wrist
+      [120, 14, 108, 4],   // right elbow to right wrist
+      [18, 40, 34, 84],    // left shoulder to left hip
+      [102, 40, 86, 84],   // right shoulder to right hip
+      [34, 84, 86, 84],    // left hip to right hip
+      [34, 84, 24, 129],   // left hip to left knee
+      [86, 84, 96, 129],   // right hip to right knee
+      [24, 129, 22, 174],  // left knee to left ankle
+      [96, 129, 94, 174],  // right knee to right ankle
+    ];
+
+    bones.forEach(([x1, y1, x2, y2]) => {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', 'rgba(232,114,42,0.35)');
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+    });
+
+    skeletonFigure.insertBefore(svg, skeletonFigure.firstChild);
+  }
+
+  // Timeline scrub interaction
+  const timelineBar = document.getElementById('timeline-bar');
+  const timelineProgress = document.getElementById('timeline-progress');
+  if (timelineBar && timelineProgress) {
+    timelineBar.addEventListener('click', (e) => {
+      const rect = timelineBar.getBoundingClientRect();
+      const pct = ((e.clientX - rect.left) / rect.width) * 100;
+      timelineProgress.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    });
+  }
+
+  // Upload dropzone drag-and-drop visual feedback
+  const dropzone = document.querySelector('.upload-dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--primary)';
+      dropzone.style.background = 'var(--primary-glow)';
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '';
+      dropzone.style.background = '';
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+      dropzone.style.background = '';
+    });
+  }
+
+  // Subtle parallax on skeleton joints (desktop only)
+  const joints = document.querySelectorAll('.skeleton-joint');
+  if (joints.length > 0 && window.innerWidth > 768) {
+    document.addEventListener('mousemove', (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      joints.forEach((joint, i) => {
+        const factor = (i % 3 + 1) * 0.5;
+        const baseTransform = joint.classList.contains('joint-head') || joint.classList.contains('joint-neck')
+          ? 'translateX(-50%)' : '';
+        joint.style.transform = baseTransform + ' translate(' + (dx * factor) + 'px, ' + (dy * factor) + 'px)';
+      });
+    });
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCrux - Split Contrast Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&family=Unbounded:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       OpenCrux Split Contrast — Design Prototype
+       Light top / Dark analysis cave
+       ============================================================ */
+
+    /* --- CSS Custom Properties --- */
+    :root {
+      /* Light zone */
+      --cream: #faf8f3;
+      --cream-warm: #f5f0e8;
+      --white-card: #ffffff;
+      --ink: #1a1a1a;
+      --ink-muted: rgba(26, 26, 26, 0.6);
+      --ink-faint: rgba(26, 26, 26, 0.35);
+      --warm-shadow: 0 8px 40px rgba(26, 26, 26, 0.08);
+      --warm-shadow-lg: 0 20px 60px rgba(26, 26, 26, 0.1);
+
+      /* Accent */
+      --orange: #ff6a2a;
+      --orange-hover: #ff5510;
+      --orange-glow: rgba(255, 106, 42, 0.3);
+      --orange-soft: rgba(255, 106, 42, 0.12);
+
+      /* Dark zone */
+      --obsidian: #0c0f16;
+      --obsidian-card: rgba(16, 20, 30, 0.7);
+      --obsidian-card-solid: #111520;
+      --obsidian-elevated: #151a26;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --cyan-border: rgba(6, 182, 212, 0.15);
+      --cyan-soft: rgba(6, 182, 212, 0.08);
+      --ice: #e8ecf4;
+      --ice-muted: rgba(232, 236, 244, 0.55);
+      --ice-faint: rgba(232, 236, 244, 0.25);
+
+      /* Status */
+      --send-green: #22c55e;
+      --send-green-glow: rgba(34, 197, 94, 0.35);
+      --send-green-soft: rgba(34, 197, 94, 0.12);
+      --warn-orange: #f59e0b;
+      --warn-orange-soft: rgba(245, 158, 11, 0.12);
+      --error-red: #ef4444;
+      --error-red-soft: rgba(239, 68, 68, 0.12);
+
+      /* Semi-light zone */
+      --semi-light: #1e2028;
+      --semi-light-card: #252832;
+
+      /* Typography */
+      --font-display: 'Unbounded', sans-serif;
+      --font-body: 'Albert Sans', sans-serif;
+      --font-data: 'Fira Code', monospace;
+
+      /* Spacing */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 72px;
+      --space-4xl: 96px;
+
+      /* Radii */
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    /* ============================================================
+       Reset & Base
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--ink);
+      background: var(--cream);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, p, dl, dd, dt, ul {
+      margin: 0;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      line-height: 1.1;
+    }
+
+    button, input {
+      font: inherit;
+      border: none;
+      outline: none;
+    }
+
+    /* ============================================================
+       Utility
+       ============================================================ */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-md);
+    }
+
+    @media (min-width: 768px) {
+      .container { padding: 0 var(--space-xl); }
+    }
+
+    @media (min-width: 1280px) {
+      .container { padding: 0 var(--space-2xl); }
+    }
+
+    .eyebrow {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ============================================================
+       SECTION 1: Hero (LIGHT ZONE)
+       ============================================================ */
+    .hero {
+      position: relative;
+      background: var(--cream);
+      padding: var(--space-3xl) 0 var(--space-2xl);
+      overflow: hidden;
+    }
+
+    /* Mountain silhouette SVG background */
+    .hero::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 200' preserveAspectRatio='none'%3E%3Cpath d='M0 200 L0 160 L120 80 L200 120 L320 40 L440 90 L520 30 L640 70 L720 20 L840 60 L920 10 L1040 55 L1120 25 L1200 65 L1320 15 L1440 50 L1440 200Z' fill='rgba(26,26,26,0.03)'/%3E%3Cpath d='M0 200 L0 140 L160 100 L280 130 L400 70 L520 110 L680 50 L800 90 L960 40 L1100 80 L1280 30 L1440 70 L1440 200Z' fill='rgba(26,26,26,0.02)'/%3E%3C/svg%3E") no-repeat bottom center;
+      background-size: cover;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      color: var(--orange);
+      margin-bottom: var(--space-md);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 2rem + 4vw, 6rem);
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+      line-height: 0.92;
+      margin-bottom: var(--space-lg);
+    }
+
+    .hero-tagline {
+      font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+      color: var(--ink-muted);
+      max-width: 480px;
+      line-height: 1.5;
+      margin-bottom: var(--space-xl);
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      background: var(--white-card);
+      color: var(--ink-muted);
+      border: 1px solid rgba(26, 26, 26, 0.08);
+      box-shadow: 0 2px 8px rgba(26, 26, 26, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(26, 26, 26, 0.08);
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+    }
+
+    .chip--alert {
+      background: var(--orange-soft);
+      color: var(--orange);
+      border-color: rgba(255, 106, 42, 0.15);
+    }
+
+    .chip--alert .chip-dot {
+      background: var(--error-red);
+    }
+
+    /* ============================================================
+       SECTION 2: Upload Form (LIGHT ZONE)
+       ============================================================ */
+    .upload-section {
+      background: var(--cream);
+      padding: 0 0 var(--space-3xl);
+    }
+
+    .upload-card {
+      background: var(--white-card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      box-shadow: var(--warm-shadow-lg);
+      border: 1px solid rgba(26, 26, 26, 0.04);
+      max-width: 640px;
+    }
+
+    @media (min-width: 768px) {
+      .upload-card {
+        padding: var(--space-2xl);
+      }
+    }
+
+    .upload-card .eyebrow {
+      color: var(--orange);
+      margin-bottom: var(--space-sm);
+    }
+
+    .upload-card h2 {
+      font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.8rem);
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: var(--space-sm);
+    }
+
+    .upload-card .form-description {
+      color: var(--ink-muted);
+      font-size: 0.92rem;
+      margin-bottom: var(--space-lg);
+      max-width: 440px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: var(--space-md);
+    }
+
+    @media (min-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-grid .field--full {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .field input {
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(26, 26, 26, 0.12);
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px var(--orange-soft);
+    }
+
+    .field input::placeholder {
+      color: var(--ink-faint);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      padding: 20px 16px;
+      border: 2px dashed rgba(26, 26, 26, 0.15);
+      border-radius: var(--radius-md);
+      background: var(--cream-warm);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .file-input-wrapper:hover {
+      border-color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-input-label {
+      font-weight: 600;
+      color: var(--ink);
+      font-size: 0.92rem;
+    }
+
+    .file-input-hint {
+      color: var(--ink-faint);
+      font-size: 0.82rem;
+      margin-top: 4px;
+    }
+
+    .submit-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 32px;
+      background: var(--orange);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 20px var(--orange-glow);
+      margin-top: var(--space-sm);
+    }
+
+    .submit-btn:hover {
+      background: var(--orange-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px var(--orange-glow);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ============================================================
+       SECTION 3: DRAMATIC TRANSITION
+       ============================================================ */
+    .split-transition {
+      position: relative;
+      height: 180px;
+      overflow: hidden;
+    }
+
+    .split-transition::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        168deg,
+        var(--cream) 0%,
+        var(--cream) 20%,
+        #d4c9b8 35%,
+        #5c5a60 50%,
+        #252838 65%,
+        var(--obsidian) 80%,
+        var(--obsidian) 100%
+      );
+    }
+
+    /* Diagonal slash shape */
+    .split-transition::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        168deg,
+        transparent 0%,
+        transparent 38%,
+        rgba(255, 106, 42, 0.12) 44%,
+        rgba(6, 182, 212, 0.08) 56%,
+        transparent 62%,
+        transparent 100%
+      );
+      animation: split-shimmer 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes split-shimmer {
+      0%   { opacity: 0.5; }
+      50%  { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    /* The SVG "crack" line */
+    .split-crack {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .split-crack line {
+      stroke: var(--orange);
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 6px var(--orange-glow)) drop-shadow(0 0 20px rgba(255, 106, 42, 0.15));
+    }
+
+    /* "Entering the rock" text */
+    .split-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       DARK ZONE — Common styles
+       ============================================================ */
+    .dark-zone {
+      background: var(--obsidian);
+      color: var(--ice);
+      padding: var(--space-3xl) 0;
+    }
+
+    .dark-zone .eyebrow {
+      color: var(--cyan);
+    }
+
+    .dark-zone h2 {
+      color: var(--ice);
+    }
+
+    .dark-zone h3 {
+      color: var(--ice);
+    }
+
+    .glass-card {
+      background: var(--obsidian-card);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(6, 182, 212, 0.3);
+      transform: translateY(-2px);
+    }
+
+    @media (min-width: 768px) {
+      .glass-card { padding: var(--space-xl); }
+    }
+
+    .section-gap {
+      margin-bottom: var(--space-2xl);
+    }
+
+    @media (min-width: 768px) {
+      .section-gap { margin-bottom: var(--space-3xl); }
+    }
+
+    /* ============================================================
+       SECTION 4: Verdict Band (DARK)
+       ============================================================ */
+    .verdict-band {
+      border-left: 4px solid var(--send-green);
+      padding: var(--space-lg) var(--space-xl);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      background: linear-gradient(90deg, var(--send-green-soft) 0%, transparent 40%);
+      margin-bottom: var(--space-2xl);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .verdict-band::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--send-green);
+      box-shadow: 0 0 12px var(--send-green-glow), 0 0 30px var(--send-green-glow);
+    }
+
+    .verdict-eyebrow {
+      color: var(--send-green);
+      margin-bottom: var(--space-sm);
+    }
+
+    .verdict-title {
+      font-size: clamp(1.4rem, 1.2rem + 0.8vw, 2rem);
+      font-weight: 700;
+      color: var(--send-green);
+      text-shadow: 0 0 20px var(--send-green-glow);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .verdict-icon {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .verdict-message {
+      color: var(--ice-muted);
+      font-size: 0.92rem;
+      max-width: 600px;
+    }
+
+    /* ============================================================
+       SECTION 5: Frame Preview (DARK)
+       ============================================================ */
+    .frame-preview {
+      display: grid;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-2xl);
+    }
+
+    @media (min-width: 768px) {
+      .frame-preview {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .frame-stage {
+      aspect-ratio: 16 / 10;
+      background: var(--obsidian-elevated);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .frame-stage-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      color: var(--ice-faint);
+    }
+
+    .frame-stage-placeholder svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.3;
+    }
+
+    .frame-stage-placeholder p {
+      font-family: var(--font-data);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* Simulated skeleton overlay */
+    .skeleton-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+    }
+
+    .skeleton-figure {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 160px;
+    }
+
+    .skeleton-figure .joint {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .skeleton-figure .bone {
+      position: absolute;
+      background: var(--cyan);
+      opacity: 0.4;
+      height: 2px;
+      transform-origin: left center;
+    }
+
+    .frame-info-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .frame-info-card .session-filename {
+      font-family: var(--font-data);
+      font-size: clamp(1rem, 0.9rem + 0.4vw, 1.2rem);
+      font-weight: 600;
+      color: var(--ice);
+    }
+
+    .frame-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-sm) var(--space-md);
+    }
+
+    .frame-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .frame-meta-label {
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ice-faint);
+    }
+
+    .frame-meta-value {
+      font-family: var(--font-data);
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--ice);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: auto;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--send-green));
+      border-radius: 3px;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+
+    .progress-label span {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      color: var(--ice-faint);
+    }
+
+    .progress-label .progress-percent {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* Frame scrubber mock */
+    .scrubber-row {
+      display: flex;
+      gap: 4px;
+      margin-top: var(--space-md);
+    }
+
+    .scrubber-thumb {
+      flex: 1;
+      height: 32px;
+      background: var(--obsidian-elevated);
+      border: 1px solid var(--cyan-border);
+      border-radius: 4px;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .scrubber-thumb:hover {
+      border-color: var(--cyan);
+      transform: scaleY(1.15);
+    }
+
+    .scrubber-thumb.active {
+      border-color: var(--cyan);
+      background: var(--cyan-soft);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    /* ============================================================
+       SECTION 6: Diagnostics (DARK)
+       ============================================================ */
+    .diagnostics-grid {
+      display: grid;
+      gap: var(--space-md);
+    }
+
+    @media (min-width: 768px) {
+      .diagnostics-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .diagnostics-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    .diag-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: var(--space-md);
+      background: rgba(6, 182, 212, 0.04);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(6, 182, 212, 0.08);
+    }
+
+    .diag-label {
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .diag-value {
+      font-family: var(--font-data);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ice);
+    }
+
+    .diag-note {
+      font-size: 0.78rem;
+      color: var(--ice-faint);
+    }
+
+    /* ============================================================
+       SECTION 7: Metrics Grid (DARK)
+       ============================================================ */
+    .metrics-section {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .metrics-header {
+      margin-bottom: var(--space-lg);
+    }
+
+    .metrics-header h2 {
+      font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.8rem);
+      font-weight: 700;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    @media (min-width: 768px) {
+      .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .metrics-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .metric-card {
+      background: var(--obsidian-card);
+      border: 1px solid var(--cyan-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      text-align: center;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(6, 182, 212, 0.35);
+      transform: translateY(-3px);
+    }
+
+    .metric-label {
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: var(--space-sm);
+    }
+
+    .metric-value {
+      font-family: var(--font-data);
+      font-size: clamp(1.8rem, 1.4rem + 1.5vw, 2.8rem);
+      font-weight: 700;
+      color: var(--ice);
+      text-shadow: 0 0 20px rgba(232, 236, 244, 0.15);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-value.glow-cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan-glow), 0 0 40px rgba(6, 182, 212, 0.1);
+    }
+
+    .metric-unit {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      color: var(--ice-faint);
+    }
+
+    /* ============================================================
+       SECTION 8: Warnings + Attempts (DARK)
+       ============================================================ */
+    .evidence-grid {
+      display: grid;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-2xl);
+    }
+
+    @media (min-width: 768px) {
+      .evidence-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .evidence-card-header {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .evidence-card-header h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .warning-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .warning-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px solid rgba(245, 158, 11, 0.12);
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      color: var(--ice-muted);
+    }
+
+    .warning-item .warning-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: var(--warn-orange);
+      margin-top: 1px;
+    }
+
+    .warning-item.info {
+      background: rgba(6, 182, 212, 0.06);
+      border-color: var(--cyan-border);
+    }
+
+    .warning-item.info .warning-icon {
+      color: var(--cyan);
+    }
+
+    .warning-code {
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--warn-orange);
+      margin-bottom: 4px;
+    }
+
+    .warning-item.info .warning-code {
+      color: var(--cyan);
+    }
+
+    .attempt-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .attempt-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: rgba(6, 182, 212, 0.04);
+      border: 1px solid rgba(6, 182, 212, 0.08);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.2s;
+    }
+
+    .attempt-item:hover {
+      border-color: var(--cyan-border);
+    }
+
+    .attempt-number {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan-glow);
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .attempt-details {
+      flex: 1;
+    }
+
+    .attempt-details .attempt-range {
+      font-family: var(--font-data);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--ice);
+      margin-bottom: 4px;
+    }
+
+    .attempt-stats {
+      display: flex;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+    }
+
+    .attempt-stat {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      color: var(--ice-faint);
+    }
+
+    .attempt-stat strong {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       SECTION 9: AI Insights — Disabled Placeholder (DARK)
+       ============================================================ */
+    .ai-section {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .ai-placeholder {
+      position: relative;
+      border: 1px dashed rgba(6, 182, 212, 0.15);
+      border-radius: var(--radius-lg);
+      padding: var(--space-2xl) var(--space-lg);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .ai-placeholder::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 10px,
+        rgba(6, 182, 212, 0.015) 10px,
+        rgba(6, 182, 212, 0.015) 20px
+      );
+    }
+
+    .ai-placeholder-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ai-placeholder .ai-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--ice-faint);
+      margin-bottom: var(--space-md);
+      opacity: 0.4;
+    }
+
+    .ai-placeholder h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ice-faint);
+      margin-bottom: var(--space-sm);
+    }
+
+    .ai-placeholder p {
+      color: var(--ice-faint);
+      font-size: 0.88rem;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      background: rgba(6, 182, 212, 0.06);
+      border: 1px solid rgba(6, 182, 212, 0.12);
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--ice-faint);
+      margin-top: var(--space-md);
+    }
+
+    /* ============================================================
+       SECTION 10: History (SEMI-LIGHT ZONE)
+       ============================================================ */
+    .history-zone {
+      background: var(--semi-light);
+      padding: var(--space-3xl) 0 var(--space-4xl);
+    }
+
+    .history-header {
+      margin-bottom: var(--space-xl);
+    }
+
+    .history-header .eyebrow {
+      color: var(--cyan);
+      margin-bottom: var(--space-sm);
+    }
+
+    .history-header h2 {
+      font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.8rem);
+      font-weight: 700;
+      color: var(--ice);
+    }
+
+    .history-grid {
+      display: grid;
+      gap: var(--space-md);
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 768px) {
+      .history-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .history-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .history-card {
+      background: var(--semi-light-card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: var(--space-lg);
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .history-card:hover {
+      border-color: rgba(6, 182, 212, 0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .history-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .history-filename {
+      font-family: var(--font-data);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ice);
+      word-break: break-all;
+    }
+
+    .history-verdict {
+      flex-shrink: 0;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-family: var(--font-data);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .history-verdict.ready {
+      background: var(--send-green-soft);
+      color: var(--send-green);
+    }
+
+    .history-verdict.caution {
+      background: var(--warn-orange-soft);
+      color: var(--warn-orange);
+    }
+
+    .history-verdict.negative {
+      background: var(--error-red-soft);
+      color: var(--error-red);
+    }
+
+    .history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm) var(--space-md);
+    }
+
+    .history-meta-item {
+      font-size: 0.78rem;
+      color: var(--ice-faint);
+    }
+
+    .history-meta-item strong {
+      color: var(--ice-muted);
+      font-weight: 500;
+    }
+
+    .history-route {
+      font-family: var(--font-data);
+      font-size: 0.75rem;
+      color: var(--ice-faint);
+      margin-bottom: var(--space-sm);
+    }
+
+    .history-date {
+      font-family: var(--font-data);
+      font-size: 0.68rem;
+      color: var(--ice-faint);
+      margin-top: var(--space-sm);
+      opacity: 0.6;
+    }
+
+    /* ============================================================
+       Scroll Animations
+       ============================================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ============================================================
+       Footer
+       ============================================================ */
+    .footer {
+      background: var(--obsidian);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding: var(--space-xl) 0;
+      text-align: center;
+    }
+
+    .footer p {
+      font-family: var(--font-data);
+      font-size: 0.72rem;
+      color: var(--ice-faint);
+      letter-spacing: 0.04em;
+    }
+
+    .footer .footer-accent {
+      color: var(--orange);
+    }
+
+    /* ============================================================
+       Ambient glow pulse on the split
+       ============================================================ */
+    @keyframes glow-pulse {
+      0%   { opacity: 0.4; }
+      50%  { opacity: 0.8; }
+      100% { opacity: 0.4; }
+    }
+
+    .split-glow-orb {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: glow-pulse 4s ease-in-out infinite;
+    }
+
+    .split-glow-orb.orange {
+      background: var(--orange);
+      opacity: 0.08;
+      top: -100px;
+      right: 15%;
+    }
+
+    .split-glow-orb.cyan {
+      background: var(--cyan);
+      opacity: 0.06;
+      bottom: -100px;
+      left: 20%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       SECTION 1: Hero (LIGHT ZONE)
+       ============================================================ -->
+  <section class="hero">
+    <div class="container hero-content">
+      <p class="eyebrow hero-eyebrow reveal">Local-first climbing analysis</p>
+      <h1 class="reveal reveal-delay-1">Open<br>Crux</h1>
+      <p class="hero-tagline reveal reveal-delay-2">
+        Upload one bouldering session. Inspect the pose evidence.
+        Decide whether the run is trustworthy.
+      </p>
+      <div class="chip-group reveal reveal-delay-3">
+        <span class="chip"><span class="chip-dot"></span> Single climber</span>
+        <span class="chip"><span class="chip-dot"></span> Recorded bouldering or board footage</span>
+        <span class="chip"><span class="chip-dot"></span> Deterministic, explainable metrics</span>
+        <span class="chip chip--alert"><span class="chip-dot"></span> Unsupported footage fails clearly</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 2: Upload Form (LIGHT ZONE)
+       ============================================================ -->
+  <section class="upload-section">
+    <div class="container">
+      <div class="upload-card reveal">
+        <p class="eyebrow">Intake</p>
+        <h2>Analyze a clip</h2>
+        <p class="form-description">
+          Tuned for one dominant climber in frame. When the footage is weak,
+          the reliability verdict outranks the metrics.
+        </p>
+        <div class="form-grid">
+          <div class="field field--full">
+            <label for="video-file">Video file</label>
+            <div class="file-input-wrapper" style="border-color: var(--orange); background: var(--orange-soft);">
+              <input type="file" id="video-file" accept="video/*" />
+              <p class="file-input-label" style="color: var(--orange);">known-good.mp4</p>
+              <p class="file-input-hint">1.2 MB video/mp4</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="route-name">Route name</label>
+            <input type="text" id="route-name" value="MoonBoard White Heat" readonly />
+          </div>
+          <div class="field">
+            <label for="gym-name">Gym or wall</label>
+            <input type="text" id="gym-name" value="Home Wall" readonly />
+          </div>
+        </div>
+        <button class="submit-btn" type="button">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 3v14M3 10l7-7 7 7" />
+          </svg>
+          Analyze clip
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SECTION 3: DRAMATIC TRANSITION
+       ============================================================ -->
+  <div class="split-transition">
+    <div class="split-glow-orb orange"></div>
+    <div class="split-glow-orb cyan"></div>
+    <svg class="split-crack" viewBox="0 0 1440 180" preserveAspectRatio="none">
+      <line x1="0" y1="135" x2="1440" y2="45" />
+    </svg>
+    <span class="split-label">// entering the rock</span>
+  </div>
+
+  <!-- ============================================================
+       DARK ZONE — Analysis workspace
+       ============================================================ -->
+  <div class="dark-zone">
+    <div class="container">
+
+      <!-- SECTION 4: Verdict Band -->
+      <div class="verdict-band reveal">
+        <p class="eyebrow verdict-eyebrow">Reliability verdict</p>
+        <h2 class="verdict-title">
+          <svg class="verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          Supported run
+        </h2>
+        <p class="verdict-message">
+          One dominant climber detected with strong pose coverage.
+          Metrics and attempt segmentation are reliable for this clip.
+        </p>
+      </div>
+
+      <!-- SECTION 5: Frame Preview -->
+      <div class="frame-preview section-gap">
+        <div class="frame-stage reveal">
+          <div class="skeleton-overlay"></div>
+          <div class="skeleton-figure">
+            <!-- Simulated stick-figure skeleton joints -->
+            <span class="joint" style="top: 0; left: 50%; transform: translateX(-50%);"></span>
+            <span class="joint" style="top: 18%; left: 50%; transform: translateX(-50%);"></span>
+            <span class="joint" style="top: 18%; left: 20%;"></span>
+            <span class="joint" style="top: 18%; left: 80%;"></span>
+            <span class="joint" style="top: 40%; left: 8%;"></span>
+            <span class="joint" style="top: 38%; left: 92%;"></span>
+            <span class="joint" style="top: 50%; left: 50%; transform: translateX(-50%);"></span>
+            <span class="joint" style="top: 65%; left: 35%;"></span>
+            <span class="joint" style="top: 65%; left: 65%;"></span>
+            <span class="joint" style="top: 85%; left: 28%;"></span>
+            <span class="joint" style="top: 85%; left: 72%;"></span>
+            <span class="joint" style="top: 100%; left: 22%;"></span>
+            <span class="joint" style="top: 100%; left: 78%;"></span>
+          </div>
+          <div class="frame-stage-placeholder" style="position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);">
+            <p>Frame 42 / 51 @ 6.83s</p>
+          </div>
+        </div>
+        <div class="glass-card frame-info-card reveal reveal-delay-1">
+          <p class="eyebrow">Active session</p>
+          <p class="session-filename">known-good.mp4</p>
+          <div class="frame-meta-grid">
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Route</span>
+              <span class="frame-meta-value">MoonBoard White Heat</span>
+            </div>
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Gym</span>
+              <span class="frame-meta-value">Home Wall</span>
+            </div>
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Duration</span>
+              <span class="frame-meta-value">8.50s</span>
+            </div>
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Sampled FPS</span>
+              <span class="frame-meta-value">6.0</span>
+            </div>
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Frames processed</span>
+              <span class="frame-meta-value">51</span>
+            </div>
+            <div class="frame-meta-item">
+              <span class="frame-meta-label">Status</span>
+              <span class="frame-meta-value" style="color: var(--send-green);">Completed</span>
+            </div>
+          </div>
+          <div>
+            <div class="progress-track">
+              <div class="progress-bar"></div>
+            </div>
+            <div class="progress-label">
+              <span>Analysis complete</span>
+              <span class="progress-percent">100%</span>
+            </div>
+          </div>
+          <div class="scrubber-row">
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb active"></div>
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb"></div>
+            <div class="scrubber-thumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 6: Diagnostics -->
+      <div class="section-gap">
+        <div class="glass-card reveal">
+          <p class="eyebrow" style="margin-bottom: var(--space-sm);">Live details</p>
+          <h3 style="margin-bottom: var(--space-lg); font-size: 1.1rem; font-weight: 600;">Diagnostics</h3>
+          <div class="diagnostics-grid">
+            <div class="diag-item">
+              <span class="diag-label">Pose coverage</span>
+              <span class="diag-value">96.1%</span>
+              <span class="diag-note">49 of 51 frames with pose</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Multi-pose ratio</span>
+              <span class="diag-value">0.000</span>
+              <span class="diag-note">No secondary climbers detected</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Mean visibility</span>
+              <span class="diag-value">0.891</span>
+              <span class="diag-note">Landmark quality is strong</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Visible landmarks</span>
+              <span class="diag-value">28 / 33</span>
+              <span class="diag-note">Above minimum threshold (10)</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Provisional attempts</span>
+              <span class="diag-value">1</span>
+              <span class="diag-note">Single continuous ascent</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Lateral span</span>
+              <span class="diag-value">0.184</span>
+              <span class="diag-note">Moderate lateral movement</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 7: Metrics Grid -->
+      <div class="metrics-section section-gap">
+        <div class="metrics-header reveal">
+          <p class="eyebrow" style="margin-bottom: var(--space-sm);">Headline metrics</p>
+          <h2>Session summary</h2>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card reveal">
+            <p class="metric-label">Attempts</p>
+            <p class="metric-value glow-cyan">1</p>
+            <p class="metric-unit">detected</p>
+          </div>
+          <div class="metric-card reveal reveal-delay-1">
+            <p class="metric-label">Time on wall</p>
+            <p class="metric-value">8.48<span style="font-size: 0.5em; opacity: 0.5;">s</span></p>
+            <p class="metric-unit">estimated</p>
+          </div>
+          <div class="metric-card reveal reveal-delay-2">
+            <p class="metric-label">Avg rest</p>
+            <p class="metric-value">0.00<span style="font-size: 0.5em; opacity: 0.5;">s</span></p>
+            <p class="metric-unit">between attempts</p>
+          </div>
+          <div class="metric-card reveal reveal-delay-3">
+            <p class="metric-label">Vertical progress</p>
+            <p class="metric-value glow-cyan">0.223</p>
+            <p class="metric-unit">ratio</p>
+          </div>
+          <div class="metric-card reveal reveal-delay-4">
+            <p class="metric-label">Visibility</p>
+            <p class="metric-value">0.891</p>
+            <p class="metric-unit">mean pose</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 8: Warnings + Attempts -->
+      <div class="evidence-grid section-gap">
+        <div class="glass-card reveal">
+          <div class="evidence-card-header">
+            <div>
+              <p class="eyebrow" style="margin-bottom: 4px;">Warnings</p>
+              <h3>Reliability notes</h3>
+            </div>
+          </div>
+          <div class="warning-list">
+            <div class="warning-item info" style="background: rgba(34, 197, 94, 0.04); border-color: rgba(34, 197, 94, 0.15); border-style: dashed;">
+              <svg class="warning-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--send-green);">
+                <circle cx="10" cy="10" r="8" />
+                <path d="M7 10l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div>
+                <p class="warning-code" style="color: var(--send-green);">No reliability warnings raised</p>
+                <p>All heuristic checks passed. The footage, pose detection quality, and climbing pattern meet supported thresholds.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card reveal reveal-delay-1">
+          <div class="evidence-card-header">
+            <div>
+              <p class="eyebrow" style="margin-bottom: 4px;">Evidence</p>
+              <h3>Attempts</h3>
+            </div>
+          </div>
+          <div class="attempt-list">
+            <div class="attempt-item">
+              <span class="attempt-number">1</span>
+              <div class="attempt-details">
+                <p class="attempt-range">0.00s &mdash; 8.47s</p>
+                <div class="attempt-stats">
+                  <span class="attempt-stat">Duration: <strong>8.47s</strong></span>
+                  <span class="attempt-stat">On-wall: <strong>100%</strong></span>
+                  <span class="attempt-stat">Vertical: <strong>0.223</strong></span>
+                  <span class="attempt-stat">Lateral: <strong>0.184</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 9: AI Insights (Disabled Placeholder) -->
+      <div class="ai-section section-gap reveal">
+        <p class="eyebrow" style="margin-bottom: var(--space-sm);">AI analysis</p>
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-lg); color: var(--ice-faint);">Gemma insights</h3>
+        <div class="ai-placeholder">
+          <div class="ai-placeholder-content">
+            <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a4 4 0 014 4v1a1 1 0 001 1h1a4 4 0 010 8h-1a1 1 0 00-1 1v1a4 4 0 01-8 0v-1a1 1 0 00-1-1H6a4 4 0 010-8h1a1 1 0 001-1V6a4 4 0 014-4z" />
+              <circle cx="9" cy="12" r="1" />
+              <circle cx="15" cy="12" r="1" />
+            </svg>
+            <h3>Gemma AI insights not enabled</h3>
+            <p>
+              Enable local LLM analysis with
+              <code style="font-family: var(--font-data); font-size: 0.78rem; background: rgba(6, 182, 212, 0.08); padding: 2px 8px; border-radius: 4px; color: var(--cyan);">--enable-llm</code>
+              for per-attempt movement quality scores and coaching recommendations.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm); justify-content: center; margin-top: var(--space-md);">
+              <span class="ai-badge">Movement quality</span>
+              <span class="ai-badge">Technique scores</span>
+              <span class="ai-badge">Coaching tips</span>
+              <span class="ai-badge">Difficulty estimate</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SECTION 10: History (SEMI-LIGHT ZONE)
+       ============================================================ -->
+  <section class="history-zone">
+    <div class="container">
+      <div class="history-header reveal">
+        <p class="eyebrow">Recent sessions</p>
+        <h2>History</h2>
+      </div>
+      <div class="history-grid">
+
+        <div class="history-card reveal">
+          <div class="history-card-top">
+            <span class="history-filename">known-good.mp4</span>
+            <span class="history-verdict ready">Ready</span>
+          </div>
+          <p class="history-route">MoonBoard White Heat / Home Wall</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>1</strong> attempt</span>
+            <span class="history-meta-item"><strong>8.48s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.891</strong> visibility</span>
+          </div>
+          <p class="history-date">Apr 4, 2026</p>
+        </div>
+
+        <div class="history-card reveal reveal-delay-1">
+          <div class="history-card-top">
+            <span class="history-filename">moonboard-session-2.mp4</span>
+            <span class="history-verdict ready">Ready</span>
+          </div>
+          <p class="history-route">Benchmarks V4 / Home Wall</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>3</strong> attempts</span>
+            <span class="history-meta-item"><strong>24.12s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.847</strong> visibility</span>
+          </div>
+          <p class="history-date">Apr 3, 2026</p>
+        </div>
+
+        <div class="history-card reveal reveal-delay-2">
+          <div class="history-card-top">
+            <span class="history-filename">kilter-pink-v5.mp4</span>
+            <span class="history-verdict ready">Ready</span>
+          </div>
+          <p class="history-route">Electric Slide / Movement RiNo</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>2</strong> attempts</span>
+            <span class="history-meta-item"><strong>16.33s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.912</strong> visibility</span>
+          </div>
+          <p class="history-date">Apr 1, 2026</p>
+        </div>
+
+        <div class="history-card reveal reveal-delay-3">
+          <div class="history-card-top">
+            <span class="history-filename">spray-wall-warmup.mp4</span>
+            <span class="history-verdict caution">Caution</span>
+          </div>
+          <p class="history-route">Warmup circuit / Home Wall</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>5</strong> attempts</span>
+            <span class="history-meta-item"><strong>42.70s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.723</strong> visibility</span>
+          </div>
+          <p class="history-date">Mar 30, 2026</p>
+        </div>
+
+        <div class="history-card reveal reveal-delay-4">
+          <div class="history-card-top">
+            <span class="history-filename">comp-finals-run.mp4</span>
+            <span class="history-verdict caution">Caution</span>
+          </div>
+          <p class="history-route">Finals Boulder 3 / Earth Treks</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>4</strong> attempts</span>
+            <span class="history-meta-item"><strong>31.55s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.681</strong> visibility</span>
+          </div>
+          <p class="history-date">Mar 28, 2026</p>
+        </div>
+
+        <div class="history-card reveal reveal-delay-4">
+          <div class="history-card-top">
+            <span class="history-filename">multi-person-fail.mp4</span>
+            <span class="history-verdict negative">Negative</span>
+          </div>
+          <p class="history-route">Group session / Movement RiNo</p>
+          <div class="history-meta">
+            <span class="history-meta-item"><strong>0</strong> attempts</span>
+            <span class="history-meta-item"><strong>0.00s</strong> on wall</span>
+            <span class="history-meta-item"><strong>0.312</strong> visibility</span>
+          </div>
+          <p class="history-date">Mar 25, 2026</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Footer
+       ============================================================ -->
+  <footer class="footer">
+    <div class="container">
+      <p>
+        <span class="footer-accent">OpenCrux</span> &mdash;
+        Local-first. No cloud. No excuses.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JavaScript: Scroll Reveal + Hover Effects
+       ============================================================ -->
+  <script>
+    // Intersection Observer for scroll reveal animations
+    (function () {
+      const reveals = document.querySelectorAll('.reveal');
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          {
+            threshold: 0.1,
+            rootMargin: '0px 0px -40px 0px',
+          }
+        );
+
+        reveals.forEach((el) => observer.observe(el));
+      } else {
+        // Fallback for older browsers
+        reveals.forEach((el) => el.classList.add('visible'));
+      }
+    })();
+
+    // Parallax-ish effect on the split transition glow orbs
+    (function () {
+      const splitSection = document.querySelector('.split-transition');
+      const orbs = splitSection ? splitSection.querySelectorAll('.split-glow-orb') : [];
+
+      if (orbs.length === 0) return;
+
+      let ticking = false;
+
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            const rect = splitSection.getBoundingClientRect();
+            const viewH = window.innerHeight;
+
+            if (rect.top < viewH && rect.bottom > 0) {
+              const progress = (viewH - rect.top) / (viewH + rect.height);
+              const offset = (progress - 0.5) * 40;
+
+              orbs[0].style.transform = 'translateY(' + offset + 'px)';
+              if (orbs[1]) {
+                orbs[1].style.transform = 'translateY(' + (-offset) + 'px)';
+              }
+            }
+
+            ticking = false;
+          });
+          ticking = true;
+        }
+      });
+    })();
+
+    // Metric card glow-on-hover effect
+    (function () {
+      const metricCards = document.querySelectorAll('.metric-card');
+
+      metricCards.forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+          const value = card.querySelector('.metric-value');
+          if (value) {
+            value.style.textShadow = '0 0 30px rgba(6, 182, 212, 0.4), 0 0 60px rgba(6, 182, 212, 0.15)';
+          }
+        });
+
+        card.addEventListener('mouseleave', () => {
+          const value = card.querySelector('.metric-value');
+          if (value) {
+            // Restore original text-shadow
+            if (value.classList.contains('glow-cyan')) {
+              value.style.textShadow = '0 0 20px rgba(6, 182, 212, 0.25), 0 0 40px rgba(6, 182, 212, 0.1)';
+            } else {
+              value.style.textShadow = '0 0 20px rgba(232, 236, 244, 0.15)';
+            }
+          }
+        });
+      });
+    })();
+
+    // Subtle scrubber interaction
+    (function () {
+      const thumbs = document.querySelectorAll('.scrubber-thumb');
+
+      thumbs.forEach((thumb) => {
+        thumb.addEventListener('click', () => {
+          thumbs.forEach((t) => t.classList.remove('active'));
+          thumb.classList.add('active');
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCrux — Dark Neon Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   RESET & BASE
+   ======================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-base: #0a0e17;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --border-card: rgba(255, 255, 255, 0.08);
+  --border-card-hover: rgba(255, 255, 255, 0.14);
+
+  --accent: #ff5722;
+  --accent-glow: rgba(255, 87, 34, 0.4);
+  --accent-glow-strong: rgba(255, 87, 34, 0.6);
+  --accent-soft: rgba(255, 87, 34, 0.12);
+
+  --success: #22c55e;
+  --success-glow: rgba(34, 197, 94, 0.3);
+  --success-soft: rgba(34, 197, 94, 0.1);
+
+  --warning: #f59e0b;
+  --warning-glow: rgba(245, 158, 11, 0.3);
+  --warning-soft: rgba(245, 158, 11, 0.1);
+
+  --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.3);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
+
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Fira Code', monospace;
+
+  --blur: blur(20px);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   BACKGROUND — GRADIENT MESH
+   ======================================== */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 5%, rgba(255, 87, 34, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 40% at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 30% 50%, rgba(34, 197, 94, 0.03) 0%, transparent 40%),
+    linear-gradient(180deg, #0a0e17 0%, #0d1320 50%, #0a0e17 100%);
+}
+
+/* ========================================
+   NOISE / GRAIN OVERLAY
+   ======================================== */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR
+   ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ========================================
+   CONTAINER
+   ======================================== */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (min-width: 768px) {
+  .container { padding: 0 32px; }
+}
+@media (min-width: 1280px) {
+  .container { padding: 0 48px; }
+}
+
+/* ========================================
+   GLASS CARD
+   ======================================== */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-card-hover);
+}
+
+/* ========================================
+   STAGGERED ENTRANCE ANIMATIONS
+   ======================================== */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.anim-enter {
+  opacity: 0;
+  animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-d1 { animation-delay: 0.05s; }
+.anim-d2 { animation-delay: 0.12s; }
+.anim-d3 { animation-delay: 0.2s; }
+.anim-d4 { animation-delay: 0.3s; }
+.anim-d5 { animation-delay: 0.4s; }
+.anim-d6 { animation-delay: 0.5s; }
+.anim-d7 { animation-delay: 0.6s; }
+.anim-d8 { animation-delay: 0.7s; }
+.anim-d9 { animation-delay: 0.8s; }
+.anim-d10 { animation-delay: 0.9s; }
+
+/* ========================================
+   HERO / MASTHEAD
+   ======================================== */
+.hero {
+  padding: 48px 0 32px;
+  text-align: center;
+  position: relative;
+}
+
+.hero-logo {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #ffffff 0%, #ff5722 50%, #ff8a65 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  display: inline-block;
+}
+
+.hero-logo::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.hero-tagline {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: var(--text-secondary);
+  margin-top: 12px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  backdrop-filter: var(--blur);
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+.chip .dot.green { background: var(--success); box-shadow: 0 0 6px var(--success-glow); }
+.chip .dot.blue { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+
+/* ========================================
+   UPLOAD FORM
+   ======================================== */
+.upload-section {
+  padding: 24px 0;
+}
+
+.upload-card {
+  padding: 28px;
+}
+
+.upload-card h2 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-card h2 .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.upload-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .upload-grid {
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: end;
+  }
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15), 0 0 20px rgba(255, 87, 34, 0.1);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input.has-value {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.file-input-wrapper {
+  position: relative;
+}
+
+.file-input-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-card-hover);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.file-input-display:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.file-input-display .file-icon {
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.file-input-display.has-file {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.btn-analyze {
+  padding: 12px 32px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px var(--accent-glow), 0 0 40px rgba(255, 87, 34, 0.15);
+  white-space: nowrap;
+}
+
+.btn-analyze:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px var(--accent-glow-strong), 0 0 60px rgba(255, 87, 34, 0.2);
+}
+
+.btn-analyze:active {
+  transform: translateY(0);
+}
+
+.btn-analyze::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-analyze:hover::before {
+  left: 100%;
+}
+
+/* ========================================
+   VERDICT BAND
+   ======================================== */
+.verdict-section {
+  padding: 16px 0;
+}
+
+.verdict-band {
+  position: relative;
+  padding: 20px 28px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Animated gradient border */
+.verdict-band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--verdict-angle, 0deg),
+    var(--success) 0%,
+    rgba(34, 197, 94, 0.2) 25%,
+    var(--success) 50%,
+    rgba(34, 197, 94, 0.2) 75%,
+    var(--success) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: verdictBorderRotate 4s linear infinite;
+}
+
+@keyframes verdictBorderRotate {
+  to { --verdict-angle: 360deg; }
+}
+
+@property --verdict-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.verdict-band-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.verdict-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.verdict-icon.success {
+  background: var(--success-soft);
+  color: var(--success);
+  box-shadow: 0 0 20px var(--success-glow);
+}
+
+.verdict-label {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.verdict-sublabel {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.verdict-badge {
+  margin-left: auto;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+/* ========================================
+   MAIN GRID LAYOUT
+   ======================================== */
+.main-grid {
+  display: grid;
+  gap: 20px;
+  padding: 12px 0;
+}
+
+@media (min-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
+  .main-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* ========================================
+   FRAME PREVIEW
+   ======================================== */
+.frame-preview {
+  padding: 0;
+  overflow: hidden;
+  min-height: 200px;
+  position: relative;
+}
+
+.frame-preview-inner {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, rgba(255, 87, 34, 0.03) 0%, transparent 50%),
+    linear-gradient(315deg, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+    rgba(0, 0, 0, 0.3);
+  position: relative;
+  padding: 32px;
+}
+
+.frame-placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.frame-session-label {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.frame-filename {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+.frame-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.frame-badge {
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.frame-timestamp {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.frame-overlay-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ========================================
+   DIAGNOSTICS SIDEBAR
+   ======================================== */
+.diagnostics-card {
+  padding: 24px;
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title .badge {
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.badge-ready {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge-caution {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.diag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diag-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.diag-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.diag-label {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.diag-value {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+.diag-value.good { color: var(--success); text-shadow: 0 0 8px var(--success-glow); }
+.diag-value.warn { color: var(--warning); text-shadow: 0 0 8px var(--warning-glow); }
+
+/* ========================================
+   METRICS GRID
+   ======================================== */
+.metrics-section {
+  padding: 12px 0;
+}
+
+.metrics-section > .section-title-large {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metrics-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .metrics-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.metric-card {
+  padding: 20px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metric-card:hover::after {
+  opacity: 1;
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 1.65rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-primary);
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.metric-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin-left: 2px;
+}
+
+.metric-bar {
+  margin-top: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metric-bar-fill.green {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+/* ========================================
+   WARNINGS CARD
+   ======================================== */
+.warnings-section {
+  padding: 12px 0;
+}
+
+.warnings-card {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.warnings-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 1rem;
+}
+
+.warnings-text {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+.warnings-text strong {
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* ========================================
+   EVIDENCE / ATTEMPTS
+   ======================================== */
+.evidence-section {
+  padding: 12px 0;
+}
+
+.evidence-card {
+  padding: 24px;
+}
+
+.attempt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.attempt-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.attempt-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.15);
+}
+
+.attempt-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.attempt-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.attempt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.attempt-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.attempt-stat .val {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+.attempt-timeline {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  position: relative;
+}
+
+.attempt-timeline-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), #ff8a65);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* ========================================
+   AI INSIGHTS
+   ======================================== */
+.insights-section {
+  padding: 12px 0;
+}
+
+.insights-card {
+  padding: 24px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.insights-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.insights-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.insights-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.insights-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  max-width: 340px;
+}
+
+.insights-enable-btn {
+  margin-top: 16px;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.insights-enable-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.15);
+}
+
+/* ========================================
+   HISTORY SHELF
+   ======================================== */
+.history-section {
+  padding: 24px 0 48px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.history-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.history-scroll {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .history-scroll {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .history-scroll {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.history-card {
+  padding: 18px 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.history-card.ready::before {
+  background: var(--success);
+  box-shadow: 0 0 10px var(--success-glow);
+}
+
+.history-card.caution::before {
+  background: var(--warning);
+  box-shadow: 0 0 10px var(--warning-glow);
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.history-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.history-name {
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.history-status {
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.history-status.ready {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.history-status.caution {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.history-gym {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+}
+
+.history-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.history-stat {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.history-stat .val {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.history-date {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+.footer {
+  text-align: center;
+  padding: 24px 0 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.footer-text {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.footer-text a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.footer-text a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   SECTION DIVIDER
+   ======================================== */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  margin: 8px 0;
+}
+
+/* ========================================
+   SPECIAL: GLOW ACCENTS
+   ======================================== */
+.glow-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.glow-dot.orange {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.glow-dot.green {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+/* ========================================
+   RESPONSIVE UTILITIES
+   ======================================== */
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+
+  .verdict-band {
+    padding: 16px 20px;
+  }
+
+  .verdict-badge {
+    display: none;
+  }
+
+  .metric-value {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 374px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HERO / MASTHEAD
+     ============================================================ -->
+<header class="hero container anim-enter anim-d1">
+  <div class="hero-logo">OpenCrux</div>
+  <p class="hero-tagline">Local-first climbing video analysis</p>
+  <div class="hero-chips">
+    <span class="chip"><span class="dot"></span>MediaPipe Pose</span>
+    <span class="chip"><span class="dot green"></span>Offline Ready</span>
+    <span class="chip"><span class="dot blue"></span>Privacy First</span>
+    <span class="chip"><span class="dot"></span>Bouldering</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     UPLOAD FORM
+     ============================================================ -->
+<section class="upload-section container anim-enter anim-d2">
+  <div class="upload-card glass">
+    <h2>
+      <span class="icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </span>
+      Analyze a Session
+    </h2>
+    <div class="upload-grid">
+      <div class="form-group">
+        <label>Video File</label>
+        <div class="file-input-wrapper">
+          <div class="file-input-display has-file">
+            <span class="file-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            </span>
+            known-good.mp4
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Route Name</label>
+        <input type="text" class="form-input has-value" value="Pink V3 Slab" readonly>
+      </div>
+      <div class="form-group">
+        <label>Gym</label>
+        <input type="text" class="form-input has-value" value="Movement RiNo" readonly>
+      </div>
+      <div class="form-group" style="display:flex;align-items:end;">
+        <button class="btn-analyze">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Analyze
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     VERDICT BAND
+     ============================================================ -->
+<section class="verdict-section container anim-enter anim-d3">
+  <div class="verdict-band glass">
+    <div class="verdict-band-inner">
+      <div class="verdict-icon success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div class="verdict-label">Supported Run</div>
+        <div class="verdict-sublabel">All reliability checks passed &mdash; metrics are trustworthy</div>
+      </div>
+      <div class="verdict-badge">Ready</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FRAME PREVIEW + DIAGNOSTICS GRID
+     ============================================================ -->
+<section class="container anim-enter anim-d4">
+  <div class="main-grid">
+
+    <!-- Frame Preview -->
+    <div class="frame-preview glass">
+      <div class="frame-overlay-grid"></div>
+      <div class="frame-preview-inner">
+        <div class="frame-placeholder-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+        </div>
+        <div class="frame-session-label">Session Preview</div>
+        <div class="frame-filename">known-good.mp4</div>
+        <div class="frame-badge-row">
+          <span class="frame-badge">30 fps</span>
+          <span class="frame-badge">1280 &times; 720</span>
+          <span class="frame-badge">12.4s</span>
+          <span class="frame-badge">373 frames</span>
+        </div>
+        <div class="frame-timestamp">Analyzed 2026-04-04 09:32:17</div>
+      </div>
+    </div>
+
+    <!-- Diagnostics Sidebar -->
+    <div class="diagnostics-card glass">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Diagnostics
+        <span class="badge badge-ready">Ready</span>
+      </div>
+      <div class="diag-list">
+        <div class="diag-item">
+          <span class="diag-label">Status</span>
+          <span class="diag-value good">Ready</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Visibility</span>
+          <span class="diag-value good">89.1%</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Total Frames</span>
+          <span class="diag-value">373</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Detected Poses</span>
+          <span class="diag-value">332</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Dropped Frames</span>
+          <span class="diag-value good">0</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Avg Confidence</span>
+          <span class="diag-value good">0.94</span>
+        </div>
+        <div class="diag-item">
+          <span class="diag-label">Processing Time</span>
+          <span class="diag-value">1.82s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     METRICS GRID
+     ============================================================ -->
+<section class="metrics-section container anim-enter anim-d5">
+  <div class="section-title-large">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Session Metrics
+  </div>
+  <div class="metrics-grid">
+
+    <div class="metric-card glass anim-enter anim-d5">
+      <div class="metric-label">Attempts</div>
+      <div class="metric-value">1</div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill green" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <div class="metric-card glass anim-enter anim-d6">
+      <div class="metric-label">Time on Wall</div>
+      <div class="metric-value">8.48<span class="metric-unit">s</span></div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill" style="width: 68%"></div>
+      </div>
+    </div>
+
+    <div class="metric-card glass anim-enter anim-d7">
+      <div class="metric-label">Avg Rest</div>
+      <div class="metric-value">0.00<span class="metric-unit">s</span></div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill green" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="metric-card glass anim-enter anim-d8">
+      <div class="metric-label">Vertical Progress</div>
+      <div class="metric-value">0.223</div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill" style="width: 22.3%"></div>
+      </div>
+    </div>
+
+    <div class="metric-card glass anim-enter anim-d9">
+      <div class="metric-label">Visibility</div>
+      <div class="metric-value">0.891</div>
+      <div class="metric-bar">
+        <div class="metric-bar-fill green" style="width: 89.1%"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     WARNINGS
+     ============================================================ -->
+<section class="warnings-section container anim-enter anim-d6">
+  <div class="warnings-card glass">
+    <div class="warnings-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>
+    </div>
+    <div class="warnings-text"><strong>No reliability warnings raised.</strong> All thresholds met for this session.</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     EVIDENCE / ATTEMPTS
+     ============================================================ -->
+<section class="evidence-section container anim-enter anim-d7">
+  <div class="evidence-card glass">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Attempts &amp; Evidence
+    </div>
+
+    <div class="attempt-row">
+      <div class="attempt-number">1</div>
+      <div class="attempt-details">
+        <div class="attempt-title">Attempt 1 &mdash; Clean send</div>
+        <div class="attempt-meta">
+          <div class="attempt-stat">Start: <span class="val">00:01.83</span></div>
+          <div class="attempt-stat">End: <span class="val">00:10.31</span></div>
+          <div class="attempt-stat">Duration: <span class="val">8.48s</span></div>
+          <div class="attempt-stat">Peak height: <span class="val">0.223</span></div>
+        </div>
+        <div class="attempt-timeline">
+          <div class="attempt-timeline-fill" style="left: 14.8%; width: 68.4%;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     AI INSIGHTS
+     ============================================================ -->
+<section class="insights-section container anim-enter anim-d8">
+  <div class="section-title-large" style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    AI Insights
+  </div>
+  <div class="insights-card glass">
+    <div class="insights-placeholder">
+      <div class="insights-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </div>
+      <div class="insights-title">Gemma AI insights not enabled</div>
+      <div class="insights-desc">Enable local AI analysis with Gemma to get technique feedback, movement pattern detection, and personalized training suggestions.</div>
+      <button class="insights-enable-btn">Configure AI Model</button>
+    </div>
+  </div>
+</section>
+
+<div class="container"><div class="section-divider"></div></div>
+
+<!-- ============================================================
+     HISTORY SHELF
+     ============================================================ -->
+<section class="history-section container anim-enter anim-d9">
+  <div class="history-header">
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/></svg>
+      Session History
+    </h2>
+    <span class="history-count">6 sessions</span>
+  </div>
+
+  <div class="history-scroll">
+
+    <!-- Card 1 -->
+    <div class="history-card glass ready anim-enter anim-d7">
+      <div class="history-card-top">
+        <span class="history-name">Pink V3 Slab</span>
+        <span class="history-status ready">Ready</span>
+      </div>
+      <div class="history-gym">Movement RiNo</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">1</span></span>
+        <span class="history-stat">Wall: <span class="val">8.48s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.891</span></span>
+      </div>
+      <div class="history-date">Today &mdash; 09:32</div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="history-card glass ready anim-enter anim-d8">
+      <div class="history-card-top">
+        <span class="history-name">Blue V4 Overhang</span>
+        <span class="history-status ready">Ready</span>
+      </div>
+      <div class="history-gym">Movement RiNo</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">3</span></span>
+        <span class="history-stat">Wall: <span class="val">34.2s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.847</span></span>
+      </div>
+      <div class="history-date">Yesterday &mdash; 18:15</div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="history-card glass caution anim-enter anim-d9">
+      <div class="history-card-top">
+        <span class="history-name">Green V2 Arete</span>
+        <span class="history-status caution">Caution</span>
+      </div>
+      <div class="history-gym">Earth Treks Golden</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">2</span></span>
+        <span class="history-stat">Wall: <span class="val">19.7s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.623</span></span>
+      </div>
+      <div class="history-date">Apr 2 &mdash; 20:41</div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="history-card glass ready anim-enter anim-d8">
+      <div class="history-card-top">
+        <span class="history-name">Yellow V5 Roof</span>
+        <span class="history-status ready">Ready</span>
+      </div>
+      <div class="history-gym">Movement RiNo</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">7</span></span>
+        <span class="history-stat">Wall: <span class="val">62.1s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.912</span></span>
+      </div>
+      <div class="history-date">Apr 1 &mdash; 11:08</div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="history-card glass ready anim-enter anim-d9">
+      <div class="history-card-top">
+        <span class="history-name">Red V3 Dyno</span>
+        <span class="history-status ready">Ready</span>
+      </div>
+      <div class="history-gym">The Spot</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">4</span></span>
+        <span class="history-stat">Wall: <span class="val">28.6s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.879</span></span>
+      </div>
+      <div class="history-date">Mar 30 &mdash; 17:23</div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="history-card glass caution anim-enter anim-d10">
+      <div class="history-card-top">
+        <span class="history-name">White V6 Crimp Line</span>
+        <span class="history-status caution">Caution</span>
+      </div>
+      <div class="history-gym">Earth Treks Golden</div>
+      <div class="history-stats">
+        <span class="history-stat">Attempts: <span class="val">11</span></span>
+        <span class="history-stat">Wall: <span class="val">94.3s</span></span>
+        <span class="history-stat">Vis: <span class="val">0.714</span></span>
+      </div>
+      <div class="history-date">Mar 28 &mdash; 19:55</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="footer container anim-enter anim-d10">
+  <p class="footer-text">OpenCrux v0.1.0 &mdash; local-first &middot; no data leaves your machine &mdash; <a href="#">GitHub</a></p>
+</footer>
+
+<!-- ============================================================
+     INLINE JS: Micro-interactions
+     ============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // ---- Intersection Observer for staggered entrance animations ----
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.animationPlayState = 'running';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.anim-enter').forEach(function(el) {
+    observer.observe(el);
+  });
+
+  // ---- Hover glow on metric cards ----
+  document.querySelectorAll('.metric-card').forEach(function(card) {
+    card.addEventListener('mouseenter', function() {
+      var value = card.querySelector('.metric-value');
+      if (value) {
+        value.style.textShadow = '0 0 30px rgba(255, 87, 34, 0.6), 0 0 60px rgba(255, 87, 34, 0.3)';
+      }
+    });
+    card.addEventListener('mouseleave', function() {
+      var value = card.querySelector('.metric-value');
+      if (value) {
+        value.style.textShadow = '0 0 20px rgba(255, 87, 34, 0.4)';
+      }
+    });
+  });
+
+  // ---- Analyze button ripple effect ----
+  var analyzeBtn = document.querySelector('.btn-analyze');
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', function(e) {
+      var rect = this.getBoundingClientRect();
+      var ripple = document.createElement('span');
+      var size = Math.max(rect.width, rect.height);
+      ripple.style.cssText =
+        'position: absolute;' +
+        'border-radius: 50%;' +
+        'background: rgba(255, 255, 255, 0.3);' +
+        'width: ' + size + 'px;' +
+        'height: ' + size + 'px;' +
+        'left: ' + (e.clientX - rect.left - size / 2) + 'px;' +
+        'top: ' + (e.clientY - rect.top - size / 2) + 'px;' +
+        'transform: scale(0);' +
+        'animation: ripple 0.6s ease-out;' +
+        'pointer-events: none;';
+      this.appendChild(ripple);
+      setTimeout(function() { ripple.remove(); }, 600);
+    });
+  }
+
+  // ---- History card click flash ----
+  document.querySelectorAll('.history-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      var self = this;
+      self.style.boxShadow = '0 0 40px rgba(255, 87, 34, 0.3), 0 8px 32px rgba(0, 0, 0, 0.3)';
+      setTimeout(function() {
+        self.style.boxShadow = '';
+      }, 400);
+    });
+  });
+
+  // ---- Parallax-lite on hero ----
+  var hero = document.querySelector('.hero-logo');
+  if (hero) {
+    window.addEventListener('mousemove', function(e) {
+      var x = (e.clientX / window.innerWidth - 0.5) * 6;
+      var y = (e.clientY / window.innerHeight - 0.5) * 4;
+      hero.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+    });
+  }
+
+  // ---- Typing cursor effect on frame filename ----
+  var filename = document.querySelector('.frame-filename');
+  if (filename) {
+    filename.innerHTML = filename.textContent + '<span class="cursor-blink"></span>';
+    var style = document.createElement('style');
+    style.textContent =
+      '.cursor-blink {' +
+      '  display: inline-block;' +
+      '  width: 2px;' +
+      '  height: 1em;' +
+      '  background: var(--accent);' +
+      '  margin-left: 2px;' +
+      '  vertical-align: text-bottom;' +
+      '  animation: cursorBlink 1s step-end infinite;' +
+      '}' +
+      '@keyframes cursorBlink {' +
+      '  0%, 100% { opacity: 1; }' +
+      '  50% { opacity: 0; }' +
+      '}' +
+      '@keyframes ripple {' +
+      '  to {' +
+      '    transform: scale(4);' +
+      '    opacity: 0;' +
+      '  }' +
+      '}';
+    document.head.appendChild(style);
+  }
+
+  // ---- Animate metric bars on load ----
+  document.querySelectorAll('.metric-bar-fill').forEach(function(bar) {
+    var width = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(function() {
+      bar.style.width = width;
+    }, 800);
+  });
+
+  // ---- Animate attempt timeline bar on load ----
+  document.querySelectorAll('.attempt-timeline-fill').forEach(function(bar) {
+    var origWidth = bar.style.width;
+    bar.style.width = '0%';
+    bar.style.transition = 'width 1.2s cubic-bezier(0.16, 1, 0.3, 1)';
+    setTimeout(function() {
+      bar.style.width = origWidth;
+    }, 1000);
+  });
+
+  // ---- Subtle card tilt on hover (desktop only) ----
+  if (window.matchMedia('(hover: hover)').matches) {
+    document.querySelectorAll('.glass').forEach(function(card) {
+      card.addEventListener('mousemove', function(e) {
+        var rect = this.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width - 0.5;
+        var y = (e.clientY - rect.top) / rect.height - 0.5;
+        this.style.transform = 'perspective(800px) rotateY(' + (x * 2) + 'deg) rotateX(' + (-y * 2) + 'deg)';
+      });
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+      });
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>
