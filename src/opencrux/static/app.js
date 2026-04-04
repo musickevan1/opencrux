@@ -1192,33 +1192,5 @@ frameStage.addEventListener("click", () => {
   }
 });
 
-/* ============================================================
-   Theme Switcher
-   ============================================================ */
-
-const themeSelect = document.getElementById("theme-select");
-if (themeSelect) {
-  // Set initial value from URL or localStorage
-  const currentTheme = new URLSearchParams(window.location.search).get("theme") || localStorage.getItem("opencrux-theme") || "";
-  themeSelect.value = currentTheme;
-
-  themeSelect.addEventListener("change", () => {
-    const theme = themeSelect.value;
-    if (theme) {
-      localStorage.setItem("opencrux-theme", theme);
-      // Reload with theme query param
-      const url = new URL(window.location);
-      url.searchParams.set("theme", theme);
-      window.location.href = url.toString();
-    } else {
-      localStorage.removeItem("opencrux-theme");
-      // Reload without theme
-      const url = new URL(window.location);
-      url.searchParams.delete("theme");
-      window.location.href = url.toString();
-    }
-  });
-}
-
 renderApp();
 void refreshHistory(true);

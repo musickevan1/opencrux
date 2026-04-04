@@ -4,38 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OpenCrux</title>
-    <link rel="stylesheet" href="/static/app.css?v=4" />
-    <script>
-      // Load theme CSS before page renders to avoid flash
-      (function() {
-        var theme = new URLSearchParams(window.location.search).get('theme') || localStorage.getItem('opencrux-theme');
-        if (theme) {
-          var link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = '/static/themes/' + encodeURIComponent(theme) + '.css';
-          document.head.appendChild(link);
-          document.documentElement.setAttribute('data-theme', theme);
-        }
-      })();
-    </script>
+    <link rel="stylesheet" href="/static/app.css?v=5" />
   </head>
   <body>
     <main class="layout">
-      <nav class="theme-switcher" aria-label="Theme selector">
-        <select id="theme-select" aria-label="Choose a theme">
-          <option value="">Default</option>
-          <option value="dark-neon">Dark Neon</option>
-          <option value="warm-earth">Warm Earth</option>
-          <option value="split-contrast">Split Contrast</option>
-          <option value="retro-arcade">Retro Arcade</option>
-          <option value="adventure-mag">Adventure Mag</option>
-          <option value="playful-3d">Playful 3D</option>
-          <option value="skate-punk">Skate Punk</option>
-        </select>
-        <a href="https://opencrux.evanmusick.dev" target="_blank" rel="noopener" class="theme-gallery-link" title="View theme gallery">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        </a>
-      </nav>
       <header class="masthead">
         <div class="masthead-copy">
           <p class="eyebrow">Local-first climbing analysis</p>
@@ -218,6 +190,6 @@
         <div id="history-list" class="history-list"></div>
       </details>
     </main>
-    <script src="/static/app.js?v=4"></script>
+    <script src="/static/app.js?v=5"></script>
   </body>
 </html>
