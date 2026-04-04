@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opencrux"
+version = "0.1.0"
+description = "Local-first climbing analytics prototype"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi",
+  "jinja2",
+  "mediapipe",
+  "opencv-python-headless",
+  "pydantic-settings",
+  "python-multipart",
+  "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx",
+  "pytest",
+  "selenium",
+]
+llm = [
+  "transformers>=4.49",
+  "torch>=2.0",
+  "accelerate",
+  "Pillow",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

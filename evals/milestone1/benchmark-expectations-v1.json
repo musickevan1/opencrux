@@ -1,0 +1,57 @@
+{
+  "benchmark_version": "milestone1-v1",
+  "soft_metric_weights": {
+    "estimated_time_on_wall_seconds": 1.0,
+    "lateral_span_ratio": 1.0,
+    "vertical_progress_ratio": 1.0,
+    "mean_pose_visibility": 1.0
+  },
+  "clips": [
+    {
+      "id": "known-good",
+      "cohort": "supported",
+      "expected_status": "completed",
+      "required_warning_codes": [],
+      "forbidden_warning_codes": [
+        "multiple_people_detected",
+        "multiple_people_dominant",
+        "low_pose_coverage",
+        "low_visibility"
+      ],
+      "attempt_count_range": [1, 1],
+      "metric_bands": {
+        "estimated_time_on_wall_seconds": [8.0, 9.0],
+        "lateral_span_ratio": [0.09, 0.12],
+        "vertical_progress_ratio": [0.2, 0.24],
+        "mean_pose_visibility": [0.86, 0.92]
+      }
+    },
+    {
+      "id": "known-bad-occlusion",
+      "cohort": "caution",
+      "expected_status": "completed",
+      "required_warning_codes": [
+        "multiple_people_detected"
+      ],
+      "forbidden_warning_codes": [
+        "multiple_people_dominant"
+      ],
+      "attempt_count_range": [1, 1],
+      "metric_bands": {
+        "estimated_time_on_wall_seconds": [12.5, 13.5],
+        "lateral_span_ratio": [0.04, 0.06],
+        "vertical_progress_ratio": [0.15, 0.19],
+        "mean_pose_visibility": [0.78, 0.84]
+      }
+    },
+    {
+      "id": "known-unsupported",
+      "cohort": "unsupported",
+      "expected_status": "failed",
+      "required_error_substrings": [
+        "multiple climbers",
+        "one dominant climber"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenCrux</title>
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="masthead">
+        <div class="masthead-copy">
+          <p class="eyebrow">Local-first climbing analysis</p>
+          <h1>OpenCrux</h1>
+          <p class="lede">
+            Review one recorded bouldering or board session at a time, inspect the pose evidence,
+            and decide whether the run is trustworthy.
+          </p>
+        </div>
+        <div class="support-chip-group" aria-label="Supported footage assumptions">
+          <span class="support-chip">Single climber</span>
+          <span class="support-chip">Recorded bouldering or board footage</span>
+          <span class="support-chip">Deterministic, explainable metrics</span>
+          <span class="support-chip support-chip-alert">Unsupported footage fails clearly</span>
+        </div>
+      </header>
+
+      <section id="intake-rail" class="intake-shell">
+        <div class="intake-copy">
+          <p class="eyebrow">Intake</p>
+          <h2>Analyze a clip</h2>
+          <p>
+            OpenCrux is tuned for one dominant climber in frame. When the footage is weak or
+            unsupported, the reliability verdict should outrank the metrics.
+          </p>
+        </div>
+        <form id="analysis-form" class="analysis-form">
+          <label>
+            <span>Video</span>
+            <input id="video-file" name="file" type="file" accept="video/*" required />
+          </label>
+          <label>
+            <span>Route Name</span>
+            <input name="route_name" type="text" placeholder="MoonBoard White Heat" />
+          </label>
+          <label>
+            <span>Gym Or Wall</span>
+            <input name="gym_name" type="text" placeholder="Home Wall" />
+          </label>
+          <button id="submit-button" type="submit">Analyze clip</button>
+        </form>
+      </section>
+
+      <section id="analysis-workspace" class="workspace-shell verdict-idle" data-verdict="idle">
+        <div class="workspace-main">
+          <section class="frame-column">
+            <div class="frame-header">
+              <div>
+                <p class="eyebrow">Active session</p>
+                <h2 id="session-title">No clip selected</h2>
+              </div>
+              <p id="session-meta" class="session-meta">Upload a supported clip to mount the analysis workspace.</p>
+            </div>
+
+            <div id="frame-stage" class="frame-stage">
+              <img id="preview-image" class="preview-image hidden" alt="Annotated pose preview" />
+              <div id="preview-empty" class="preview-empty">Upload a supported single-climber clip to mount the analysis stage.</div>
+            </div>
+
+            <div class="frame-tools">
+              <div class="progress-row">
+                <div class="progress-track">
+                  <div id="preview-progress-bar" class="progress-bar"></div>
+                </div>
+                <p id="preview-progress-label" class="preview-progress-label">0%</p>
+              </div>
+              <div class="frame-tools-meta">
+                <p class="mini-label">Stage</p>
+                <p id="preview-stage" class="stage-copy">Waiting for analysis to start.</p>
+              </div>
+              <div class="preview-scrubber-block">
+                <div class="preview-scrubber-header">
+                  <h3>Frame scrubber</h3>
+                  <p id="preview-frame-label" class="session-meta">No preview frames yet.</p>
+                </div>
+                <input id="preview-scrubber" class="preview-scrubber" type="range" min="0" max="0" value="0" disabled />
+                <div id="preview-thumbnails" class="preview-thumbnails"></div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="status-rail">
+            <section class="rail-card">
+              <p class="eyebrow">Workflow</p>
+              <h3 id="workspace-status-label">Idle</h3>
+              <p id="status" class="status idle">Waiting for a video.</p>
+            </section>
+
+            <section class="rail-card diagnostics-card">
+              <div class="section-heading compact">
+                <div>
+                  <p class="eyebrow">Live details</p>
+                  <h3>Diagnostics</h3>
+                </div>
+              </div>
+              <div id="preview-stats" class="preview-stats"></div>
+            </section>
+          </aside>
+        </div>
+
+        <section id="verdict-band" class="verdict-band verdict-idle">
+          <div>
+            <p class="eyebrow">Reliability verdict</p>
+            <h2 id="verdict-title">Ready for a clip</h2>
+          </div>
+          <p id="verdict-message" class="verdict-message">
+            Built for single-climber climbing footage. Unsupported conditions should fail clearly instead of guessing.
+          </p>
+        </section>
+
+        <section id="evidence-section" class="evidence-grid">
+          <article class="evidence-card">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Warnings</p>
+                <h3>Reliability notes</h3>
+              </div>
+            </div>
+            <div id="warnings" class="warnings"></div>
+          </article>
+
+          <article class="evidence-card">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Evidence</p>
+                <h3>Attempts</h3>
+              </div>
+            </div>
+            <div id="attempts" class="attempts"></div>
+          </article>
+        </section>
+
+        <section id="session-summary" class="summary-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Headline metrics</p>
+              <h3>Session summary</h3>
+            </div>
+          </div>
+          <div id="metrics" class="metrics-grid"></div>
+          <dl id="supporting-details" class="supporting-details"></dl>
+        </section>
+
+        <section id="llm-insights-section" class="llm-insights-section hidden">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AI analysis</p>
+              <h3>Gemma insights</h3>
+            </div>
+            <p id="llm-model-chip" class="llm-model-chip"></p>
+          </div>
+          <div id="llm-session-summary" class="llm-session-summary"></div>
+          <div id="llm-attempt-insights" class="llm-attempt-insights"></div>
+          <div id="llm-recommendations" class="llm-recommendations"></div>
+        </section>
+      </section>
+
+      <section id="history-shelf" class="history-shelf">
+        <div class="history-header">
+          <div>
+            <p class="eyebrow">Recent sessions</p>
+            <h2>History</h2>
+          </div>
+          <button id="refresh-history-button" class="secondary-button" type="button">Refresh history</button>
+        </div>
+        <div id="history-empty" class="history-empty">No saved sessions yet.</div>
+        <div id="history-list" class="history-list"></div>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

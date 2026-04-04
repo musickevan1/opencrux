@@ -1,0 +1,35 @@
+{
+  "idle_desktop_status": "Idle",
+  "idle_desktop_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-idle-desktop.png",
+  "ready_desktop_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-ready-desktop.png",
+  "ready_placeholder_text": "Stored sessions keep metrics and warnings, but annotated preview frames are not persisted in Phase 1.",
+  "history_items_after_refresh": 4,
+  "history_reload_session_title": "known-good.mp4",
+  "caution_desktop_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-caution-desktop.png",
+  "analyzing_desktop_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-analyzing-desktop.png",
+  "negative_desktop_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-negative-desktop.png",
+  "negative_verdict_title": "Unsupported footage likely",
+  "negative_verdict_message": "Multiple climbers are dominating sampled frames. This clip is likely unsupported for the current slice.",
+  "mobile_order_idle": {
+    "evidence": 3051.46875,
+    "frame": 1738.46875,
+    "history": 3428.46875,
+    "intake": 439.171875,
+    "status": 1019,
+    "summary": 2309.96875,
+    "verdict": 1407.5625
+  },
+  "idle_mobile_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-idle-mobile.png",
+  "ready_mobile_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-ready-mobile.png",
+  "caution_mobile_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-caution-mobile.png",
+  "negative_mobile_screenshot": "/home/evan/Projects/opencrux/data/samples/results/ui-phase1-verification/selenium-negative-mobile.png",
+  "mobile_order_negative": {
+    "evidence": 3553.890625,
+    "frame": 2028.5625,
+    "history": 3954.453125,
+    "intake": 439.171875,
+    "status": 1019,
+    "summary": 2704.390625,
+    "verdict": 1642.375
+  }
+}

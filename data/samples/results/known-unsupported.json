@@ -1,0 +1,8 @@
+{
+  "id": "known-unsupported",
+  "filename": "known-unsupported.mp4",
+  "source": "pexels",
+  "notes": "Multiple visible climbers in frame. This should not present as a clean supported success path.",
+  "status": "failed",
+  "error": "OpenCrux detected multiple climbers for a substantial portion of this clip. The current slice only supports one dominant climber per video."
+}

@@ -1,0 +1,48 @@
+{
+  "id": "known-bad-occlusion",
+  "filename": "known-bad-occlusion.mp4",
+  "source": "pexels",
+  "notes": "Low-angle indoor wall clip. Use it to probe pose stability and warning quality under harder framing.",
+  "status": "completed",
+  "analysis": {
+    "id": "2bd93c6ada33427186f450636e63a5d4",
+    "created_at": "2026-04-03T15:48:22.644265Z",
+    "status": "completed",
+    "original_filename": "known-bad-occlusion.mp4",
+    "stored_video_path": "/home/evan/Projects/opencrux/data/samples/known-bad-occlusion.mp4",
+    "route_name": null,
+    "gym_name": null,
+    "error_message": null,
+    "processed_frame_count": 83,
+    "sampled_fps": 6.25,
+    "source_duration_seconds": 13.2,
+    "warnings": [
+      {
+        "code": "multiple_people_detected",
+        "message": "Multiple poses were detected in part of this clip. OpenCrux currently targets one dominant climber per video.",
+        "severity": "warning"
+      }
+    ],
+    "attempts": [
+      {
+        "index": 1,
+        "start_seconds": 0.0,
+        "end_seconds": 13.12,
+        "duration_seconds": 13.12,
+        "vertical_progress_ratio": 0.169,
+        "lateral_span_ratio": 0.048,
+        "hesitation_markers": []
+      }
+    ],
+    "metrics": {
+      "attempt_count": 1,
+      "estimated_time_on_wall_seconds": 13.12,
+      "average_rest_seconds": 0.0,
+      "total_rest_seconds": 0.0,
+      "lateral_span_ratio": 0.048,
+      "vertical_progress_ratio": 0.169,
+      "hesitation_marker_count": 0,
+      "mean_pose_visibility": 0.802
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "known-good",
+  "filename": "known-good.mp4",
+  "source": "pexels",
+  "notes": "Single climber on an indoor wall. Candidate known-good clip for the first verification pass.",
+  "status": "completed",
+  "analysis": {
+    "id": "dda7073b24414cb5971df3330e1f5f09",
+    "created_at": "2026-04-03T15:48:15.197175Z",
+    "status": "completed",
+    "original_filename": "known-good.mp4",
+    "stored_video_path": "/home/evan/Projects/opencrux/data/samples/known-good.mp4",
+    "route_name": null,
+    "gym_name": null,
+    "error_message": null,
+    "processed_frame_count": 54,
+    "sampled_fps": 6.25,
+    "source_duration_seconds": 8.56,
+    "warnings": [],
+    "attempts": [
+      {
+        "index": 1,
+        "start_seconds": 0.0,
+        "end_seconds": 8.48,
+        "duration_seconds": 8.48,
+        "vertical_progress_ratio": 0.223,
+        "lateral_span_ratio": 0.105,
+        "hesitation_markers": []
+      }
+    ],
+    "metrics": {
+      "attempt_count": 1,
+      "estimated_time_on_wall_seconds": 8.48,
+      "average_rest_seconds": 0.0,
+      "total_rest_seconds": 0.0,
+      "lateral_span_ratio": 0.105,
+      "vertical_progress_ratio": 0.223,
+      "hesitation_marker_count": 0,
+      "mean_pose_visibility": 0.891
+    }
+  }
+}

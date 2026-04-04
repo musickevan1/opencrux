@@ -1,0 +1,47 @@
+{
+  "benchmark_version": "milestone1-v1",
+  "summary_path": "data/samples/results/summary.json",
+  "report_path": "evals/milestone1/baseline-score-v1.json",
+  "passed": true,
+  "hard_failure_count": 0,
+  "hard_failures": [],
+  "soft_penalty_total": 0.0,
+  "clip_reports": [
+    {
+      "id": "known-good",
+      "cohort": "supported",
+      "status": "completed",
+      "error": null,
+      "warning_codes": [],
+      "passed": true,
+      "hard_failures": [],
+      "soft_penalty": 0.0,
+      "soft_penalty_breakdown": {}
+    },
+    {
+      "id": "known-bad-occlusion",
+      "cohort": "caution",
+      "status": "completed",
+      "error": null,
+      "warning_codes": [
+        "multiple_people_detected"
+      ],
+      "passed": true,
+      "hard_failures": [],
+      "soft_penalty": 0.0,
+      "soft_penalty_breakdown": {}
+    },
+    {
+      "id": "known-unsupported",
+      "cohort": "unsupported",
+      "status": "failed",
+      "error": "OpenCrux detected multiple climbers for a substantial portion of this clip. The current slice only supports one dominant climber per video.",
+      "warning_codes": [],
+      "passed": true,
+      "hard_failures": [],
+      "soft_penalty": 0.0,
+      "soft_penalty_breakdown": {}
+    }
+  ],
+  "baseline_comparison": null
+}

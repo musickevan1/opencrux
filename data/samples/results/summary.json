@@ -1,0 +1,104 @@
+{
+  "manifest": "/home/evan/Projects/opencrux/data/samples/manifest.json",
+  "result_count": 3,
+  "results": [
+    {
+      "id": "known-good",
+      "filename": "known-good.mp4",
+      "source": "pexels",
+      "notes": "Single climber on an indoor wall. Candidate known-good clip for the first verification pass.",
+      "status": "completed",
+      "analysis": {
+        "id": "8e629cc9039e4a1585b98d2e69629004",
+        "created_at": "2026-04-03T06:36:23.078234Z",
+        "status": "completed",
+        "original_filename": "known-good.mp4",
+        "stored_video_path": "/home/evan/Projects/opencrux/data/samples/known-good.mp4",
+        "route_name": null,
+        "gym_name": null,
+        "error_message": null,
+        "processed_frame_count": 54,
+        "sampled_fps": 6.25,
+        "source_duration_seconds": 8.56,
+        "warnings": [],
+        "attempts": [
+          {
+            "index": 1,
+            "start_seconds": 0.0,
+            "end_seconds": 8.48,
+            "duration_seconds": 8.48,
+            "vertical_progress_ratio": 0.223,
+            "lateral_span_ratio": 0.105,
+            "hesitation_markers": []
+          }
+        ],
+        "metrics": {
+          "attempt_count": 1,
+          "estimated_time_on_wall_seconds": 8.48,
+          "average_rest_seconds": 0.0,
+          "total_rest_seconds": 0.0,
+          "lateral_span_ratio": 0.105,
+          "vertical_progress_ratio": 0.223,
+          "hesitation_marker_count": 0,
+          "mean_pose_visibility": 0.891
+        }
+      }
+    },
+    {
+      "id": "known-bad-occlusion",
+      "filename": "known-bad-occlusion.mp4",
+      "source": "pexels",
+      "notes": "Low-angle indoor wall clip. Use it to probe pose stability and warning quality under harder framing.",
+      "status": "completed",
+      "analysis": {
+        "id": "c937ff5e3654453581fe37214f9e35a3",
+        "created_at": "2026-04-03T06:36:46.333071Z",
+        "status": "completed",
+        "original_filename": "known-bad-occlusion.mp4",
+        "stored_video_path": "/home/evan/Projects/opencrux/data/samples/known-bad-occlusion.mp4",
+        "route_name": null,
+        "gym_name": null,
+        "error_message": null,
+        "processed_frame_count": 83,
+        "sampled_fps": 6.25,
+        "source_duration_seconds": 13.2,
+        "warnings": [
+          {
+            "code": "multiple_people_detected",
+            "message": "Multiple poses were detected in part of this clip. OpenCrux currently targets one dominant climber per video.",
+            "severity": "warning"
+          }
+        ],
+        "attempts": [
+          {
+            "index": 1,
+            "start_seconds": 0.0,
+            "end_seconds": 13.12,
+            "duration_seconds": 13.12,
+            "vertical_progress_ratio": 0.169,
+            "lateral_span_ratio": 0.048,
+            "hesitation_markers": []
+          }
+        ],
+        "metrics": {
+          "attempt_count": 1,
+          "estimated_time_on_wall_seconds": 13.12,
+          "average_rest_seconds": 0.0,
+          "total_rest_seconds": 0.0,
+          "lateral_span_ratio": 0.048,
+          "vertical_progress_ratio": 0.169,
+          "hesitation_marker_count": 0,
+          "mean_pose_visibility": 0.802
+        }
+      }
+    },
+    {
+      "id": "known-unsupported",
+      "filename": "known-unsupported.mp4",
+      "source": "pexels",
+      "notes": "Multiple visible climbers in frame. This should not present as a clean supported success path.",
+      "status": "failed",
+      "error": "OpenCrux detected multiple climbers for a substantial portion of this clip. The current slice only supports one dominant climber per video."
+    }
+  ]
+}

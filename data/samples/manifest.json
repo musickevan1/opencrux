@@ -1,0 +1,23 @@
+[
+  {
+    "id": "known-good",
+    "filename": "known-good.mp4",
+    "source": "pexels",
+    "source_url": "https://www.pexels.com/video/woman-climbing-up-the-wall-5382886/",
+    "notes": "Single climber on an indoor wall. Candidate known-good clip for the first verification pass."
+  },
+  {
+    "id": "known-bad-occlusion",
+    "filename": "known-bad-occlusion.mp4",
+    "source": "pexels",
+    "source_url": "https://www.pexels.com/video/low-angle-view-of-a-woman-climbing-up-the-wall-5383066/",
+    "notes": "Low-angle indoor wall clip. Use it to probe pose stability and warning quality under harder framing."
+  },
+  {
+    "id": "known-unsupported",
+    "filename": "known-unsupported.mp4",
+    "source": "pexels",
+    "source_url": "https://www.pexels.com/video/people-doing-wall-climbing-5379291/",
+    "notes": "Multiple visible climbers in frame. This should not present as a clean supported success path."
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "benchmark_version": "milestone1-v1",
+  "source_manifest": "data/samples/manifest.json",
+  "baseline_summary": "data/samples/results/summary.json",
+  "mutable_surface": "src/opencrux/heuristics.py",
+  "clips": [
+    {
+      "id": "known-good",
+      "filename": "known-good.mp4",
+      "cohort": "supported"
+    },
+    {
+      "id": "known-bad-occlusion",
+      "filename": "known-bad-occlusion.mp4",
+      "cohort": "caution"
+    },
+    {
+      "id": "known-unsupported",
+      "filename": "known-unsupported.mp4",
+      "cohort": "unsupported"
+    }
+  ]
+}

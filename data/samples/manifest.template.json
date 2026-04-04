@@ -1,0 +1,22 @@
+[
+  {
+    "id": "known-good",
+    "filename": "known-good.mp4",
+    "source": "user-owned",
+    "notes": "Single climber on a fixed board angle",
+    "route_name": "Example Problem",
+    "gym_name": "Example Wall"
+  },
+  {
+    "id": "known-bad-occlusion",
+    "filename": "known-bad-occlusion.mp4",
+    "source": "user-owned",
+    "notes": "Long occlusion stretches behind volumes"
+  },
+  {
+    "id": "known-unsupported",
+    "filename": "known-unsupported.mp4",
+    "source": "open-license",
+    "notes": "Multiple visible people in frame"
+  }
+]
