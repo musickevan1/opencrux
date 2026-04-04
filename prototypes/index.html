@@ -117,17 +117,14 @@
   </div>
 
   <script>
-    // Change this to match your deployed app URL
-    const APP_URL = '/';
-
     const themes = [
-      { id: 'dark-neon', name: 'Dark Neon', color: '#ff5722', desc: 'Full dark mode, electric orange glows, glass morphism. Mission control meets climbing gym at night.' },
-      { id: 'warm-earth', name: 'Warm Earth', color: '#e8722a', desc: 'Charcoal + sandstone, serif headings, topographic textures. Climbing guidebook at basecamp.' },
-      { id: 'split-contrast', name: 'Split Contrast', color: '#06b6d4', desc: 'Light top, dark analysis cave. Dramatic diagonal transition \u2014 entering the rock.' },
-      { id: 'retro-arcade', name: 'Retro Arcade', color: '#ff2d95', desc: 'Pixel fonts, CRT scanlines, coin-slot upload, HIGH SCORE metrics, HALL OF FAME.' },
-      { id: 'adventure-mag', name: 'Adventure Mag', color: '#0d4f4f', desc: 'Bold editorial magazine layout. Bebas Neue type, teal + coral, SUBMIT YOUR SEND.' },
-      { id: 'playful-3d', name: 'Playful 3D', color: '#7c3aed', desc: 'Floating holds, 3D tilt cards, rope connectors, boulder drop zone. Maximum whimsy.' },
-      { id: 'skate-punk', name: 'Skate Punk', color: '#ff1493', desc: 'Sticker-bomb on kraft paper. YEET YOUR BETA, hand-drawn fonts, emoji chaos.' },
+      { id: 'dark-neon', name: 'Dark Neon', file: 'dark-neon.html', color: '#ff5722', desc: 'Full dark mode, electric orange glows, glass morphism. Mission control meets climbing gym at night.' },
+      { id: 'warm-earth', name: 'Warm Earth', file: 'warm-earth.html', color: '#e8722a', desc: 'Charcoal + sandstone, serif headings, topographic textures. Climbing guidebook at basecamp.' },
+      { id: 'split-contrast', name: 'Split Contrast', file: 'split-contrast.html', color: '#06b6d4', desc: 'Light top, dark analysis cave. Dramatic diagonal transition \u2014 entering the rock.' },
+      { id: 'retro-arcade', name: 'Retro Arcade', file: 'retro-arcade.html', color: '#ff2d95', desc: 'Pixel fonts, CRT scanlines, coin-slot upload, HIGH SCORE metrics, HALL OF FAME.' },
+      { id: 'adventure-mag', name: 'Adventure Mag', file: 'adventure-mag.html', color: '#0d4f4f', desc: 'Bold editorial magazine layout. Bebas Neue type, teal + coral, SUBMIT YOUR SEND.' },
+      { id: 'playful-3d', name: 'Playful 3D', file: 'playful-3d.html', color: '#7c3aed', desc: 'Floating holds, 3D tilt cards, rope connectors, boulder drop zone. Maximum whimsy.' },
+      { id: 'skate-punk', name: 'Skate Punk', file: 'skate-punk.html', color: '#ff1493', desc: 'Sticker-bomb on kraft paper. YEET YOUR BETA, hand-drawn fonts, emoji chaos.' },
     ];
 
     let activeTheme = themes[0].id;
@@ -152,16 +149,17 @@
       devBar.appendChild(btn);
     });
 
-    // Build grid cards — each card links to the real app with ?theme= param
+    // Build grid cards
     themes.forEach(function(t) {
-      const card = document.createElement('a');
+      const card = document.createElement('div');
       card.className = 'theme-card' + (t.id === activeTheme ? ' active' : '');
       card.dataset.theme = t.id;
-      card.href = APP_URL + '?theme=' + t.id;
-      card.target = '_blank';
-      card.style.textDecoration = 'none';
-      card.style.color = 'inherit';
-      card.style.display = 'block';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = t.file;
+      iframe.loading = 'lazy';
+      iframe.sandbox = 'allow-scripts';
+      card.appendChild(iframe);
 
       const info = document.createElement('div');
       info.className = 'theme-card-info';
@@ -171,7 +169,7 @@
       const badge = document.createElement('span');
       badge.className = 'badge';
       badge.style.cssText = 'padding:4px 10px;border-radius:999px;font-family:IBM Plex Mono,monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;background:' + t.color + '22;color:' + t.color + ';border:1px solid ' + t.color + '44';
-      badge.textContent = 'live theme';
+      badge.textContent = t.id;
       info.appendChild(badge);
       card.appendChild(info);
 
@@ -180,8 +178,7 @@
       desc.textContent = t.desc;
       card.appendChild(desc);
 
-      card.addEventListener('click', function(e) {
-        e.preventDefault();
+      card.addEventListener('click', function() {
         selectTheme(t.id);
         switchView('full');
       });
@@ -209,8 +206,8 @@
       var theme = themes.find(function(t) { return t.id === id; });
       document.querySelectorAll('.theme-btn').forEach(function(btn) { btn.classList.toggle('active', btn.dataset.theme === id); });
       document.querySelectorAll('.theme-card').forEach(function(card) { card.classList.toggle('active', card.dataset.theme === id); });
-      fullIframe.src = APP_URL + '?theme=' + id;
-      openTabLink.href = APP_URL + '?theme=' + id;
+      fullIframe.src = theme.file;
+      openTabLink.href = theme.file;
     }
 
     function switchView(view) {
@@ -222,14 +219,10 @@
         gridView.style.display = 'none';
         fullView.classList.add('visible');
         var theme = themes.find(function(t) { return t.id === activeTheme; });
-        fullIframe.src = APP_URL + '?theme=' + theme.id;
-        openTabLink.href = APP_URL + '?theme=' + theme.id;
+        fullIframe.src = theme.file;
+        openTabLink.href = theme.file;
       }
     }
-
-    // Initialize full view iframe
-    fullIframe.src = APP_URL + '?theme=' + activeTheme;
-    openTabLink.href = APP_URL + '?theme=' + activeTheme;
   </script>
 </body>
 </html>

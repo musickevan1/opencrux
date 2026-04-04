@@ -104,6 +104,29 @@ body {
   border-color: var(--orange);
 }
 
+.theme-gallery-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.theme-gallery-link:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+  transform: translateY(-1px);
+}
+
 button,
 input {
   font: inherit;
