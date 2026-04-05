@@ -27,8 +27,10 @@ from .heuristics import (
     get_multi_pose_ratio,
     segment_attempts,
 )
+from .biomechanics import compute_frame_angles, compute_reach_metrics
 from .models import (
     AttemptSummary,
+    BiomechanicSummary,
     LLMInsights,
     ProcessingWarning,
     PreviewAttemptWindow,
@@ -440,6 +442,12 @@ class VisionAnalyzer:
         if failure_message is not None:
             raise AnalysisError(failure_message)
 
+        # Compute biomechanics for each attempt if pose data is available
+        attempt_summaries = self._compute_attempt_biomechanics(
+            session_id=session_id or "",
+            attempt_summaries=attempt_summaries,
+        )
+
         # Run Gemma 4 LLM analysis if enabled
         llm_insights = self._analyze_with_llm(
             video_path=video_path,
@@ -467,6 +475,76 @@ class VisionAnalyzer:
             metrics=metrics,
             llm_insights=llm_insights,
         )
+
+    def _compute_attempt_biomechanics(
+        self,
+        session_id: str,
+        attempt_summaries: list[AttemptSummary],
+    ) -> list[AttemptSummary]:
+        """Compute biomechanical metrics for each attempt from stored pose data."""
+        if self._pose_store is None:
+            return attempt_summaries
+
+        frames = self._pose_store.get_session_frames(session_id)
+        if not frames:
+            return attempt_summaries
+
+        updated: list[AttemptSummary] = []
+        for attempt in attempt_summaries:
+            # Find frames within this attempt's time range
+            attempt_frames = [
+                f for f in frames
+                if attempt.start_seconds <= f["timestamp_seconds"] <= attempt.end_seconds
+            ]
+
+            hip_offsets: list[float] = []
+            elbow_angles: list[float] = []
+            arm_extensions: list[float] = []
+            body_spans: list[float] = []
+
+            for frame_row in attempt_frames:
+                landmarks = self._pose_store.get_frame_landmarks(frame_row["id"])
+                if not landmarks or len(landmarks) < 33:
+                    continue
+
+                # Build the 33-element list indexed by landmark_index
+                lm_list: list[dict] = [{}] * 33
+                for lm in landmarks:
+                    idx = lm["landmark_index"]
+                    if 0 <= idx < 33:
+                        lm_list[idx] = lm
+
+                angles = compute_frame_angles(lm_list)
+                reach = compute_reach_metrics(lm_list)
+
+                if "hip_wall_offset" in angles:
+                    hip_offsets.append(angles["hip_wall_offset"])
+                for key in ("left_elbow", "right_elbow"):
+                    if key in angles:
+                        elbow_angles.append(angles[key])
+                for key in ("left_arm_extension", "right_arm_extension"):
+                    if key in reach:
+                        arm_extensions.append(reach[key])
+                if "body_span" in reach:
+                    body_spans.append(reach["body_span"])
+
+            bio = BiomechanicSummary(
+                mean_hip_wall_offset=round(sum(hip_offsets) / len(hip_offsets), 2) if hip_offsets else None,
+                min_elbow_angle=round(min(elbow_angles), 1) if elbow_angles else None,
+                max_arm_extension=round(max(arm_extensions), 3) if arm_extensions else None,
+                mean_body_span=round(sum(body_spans) / len(body_spans), 3) if body_spans else None,
+            )
+
+            # Only attach if we got any data
+            has_data = any(
+                v is not None for v in [
+                    bio.mean_hip_wall_offset, bio.min_elbow_angle,
+                    bio.max_arm_extension, bio.mean_body_span,
+                ]
+            )
+            updated.append(attempt.model_copy(update={"biomechanics": bio if has_data else None}))
+
+        return updated
 
     def _analyze_with_llm(
         self,
