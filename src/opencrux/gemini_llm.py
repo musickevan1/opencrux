@@ -17,7 +17,13 @@ from typing import Any
 
 from .config import Settings
 from .models import AttemptInsight, LLMInsights, TechniqueScore
-from .vision_llm import ATTEMPT_ANALYSIS_PROMPT, SESSION_SUMMARY_PROMPT, extract_json
+from .vision_llm import (
+    ATTEMPT_ANALYSIS_PROMPT,
+    ENHANCED_ATTEMPT_PROMPT,
+    SESSION_SUMMARY_PROMPT,
+    _format_biomechanics,
+    extract_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -103,18 +109,34 @@ class GeminiVisionLLM:
         attempt_index: int,
         frame_images: Sequence[bytes | Path],
         metrics: dict[str, float],
+        biomechanics: dict | None = None,
     ) -> AttemptInsight | None:
         if not self._ensure_loaded():
             return None
 
         try:
-            prompt = ATTEMPT_ANALYSIS_PROMPT.format(
-                attempt_index=attempt_index,
-                vertical_progress=metrics.get("vertical_progress", 0.0),
-                lateral_span=metrics.get("lateral_span", 0.0),
-                duration=metrics.get("duration", 0.0),
-                hesitation_count=metrics.get("hesitation_count", 0),
-            )
+            vertical_progress = metrics.get("vertical_progress", 0.0)
+            lateral_span = metrics.get("lateral_span", 0.0)
+            duration = metrics.get("duration", 0.0)
+            hesitation_count = metrics.get("hesitation_count", 0)
+
+            if biomechanics is not None:
+                prompt = ENHANCED_ATTEMPT_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                    biomechanics_text=_format_biomechanics(biomechanics),
+                )
+            else:
+                prompt = ATTEMPT_ANALYSIS_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                )
 
             images: list[bytes] = []
             for img in frame_images[:5]:
@@ -151,8 +173,16 @@ class GeminiVisionLLM:
                     efficiency=result.get("technique_scores", {}).get(
                         "efficiency", 0.0
                     ),
+                    hip_positioning=result.get("technique_scores", {}).get(
+                        "hip_positioning", 0.0
+                    ),
+                    grip_technique=result.get("technique_scores", {}).get(
+                        "grip_technique", 0.0
+                    ),
                 ),
                 coaching_tips=result.get("coaching_tips", []),
+                technique_highlights=result.get("technique_highlights", []),
+                frame_notes=result.get("frame_notes", []),
                 difficulty_estimate=result.get("difficulty_estimate"),
                 confidence=result.get("confidence", 0.5),
             )
@@ -231,7 +261,8 @@ class GeminiVisionLLM:
                 "duration": attempt.get("duration_seconds", 0.0),
                 "hesitation_count": len(attempt.get("hesitation_markers", [])),
             }
-            insight = self.analyze_attempt(idx, frames, metrics)
+            biomechanics = attempt.get("biomechanics")
+            insight = self.analyze_attempt(idx, frames, metrics, biomechanics=biomechanics)
             if insight is not None:
                 attempt_insights.append(insight)
 

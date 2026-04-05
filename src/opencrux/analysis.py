@@ -628,6 +628,12 @@ class VisionAnalyzer:
                     {"timestamp": h.timestamp_seconds, "duration": h.duration_seconds}
                     for h in a.hesitation_markers
                 ],
+                "biomechanics": {
+                    "mean_hip_wall_offset": a.biomechanics.mean_hip_wall_offset,
+                    "min_elbow_angle": a.biomechanics.min_elbow_angle,
+                    "max_arm_extension": a.biomechanics.max_arm_extension,
+                    "mean_body_span": a.biomechanics.mean_body_span,
+                } if a.biomechanics else None,
             }
             for a in attempt_summaries
         ]
