@@ -459,6 +459,23 @@ class VisionAnalyzer:
             session_id=session_id,
         )
 
+        if llm_insights and llm_insights.attempt_insights and self._pose_store:
+            for insight in llm_insights.attempt_insights:
+                if insight.technique_scores:
+                    self._pose_store.store_score(
+                        session_id=session_id,
+                        overall_score=insight.technique_scores.overall,
+                        footwork=insight.technique_scores.footwork,
+                        body_tension=insight.technique_scores.body_tension,
+                        route_reading=insight.technique_scores.route_reading,
+                        efficiency=insight.technique_scores.efficiency,
+                        hip_positioning=insight.technique_scores.hip_positioning,
+                        grip_technique=insight.technique_scores.grip_technique,
+                        difficulty_estimate=insight.difficulty_estimate,
+                        route_name=route_name,
+                        gym_name=gym_name,
+                    )
+
         return SessionAnalysis(
             id=session_id or uuid4().hex,
             status=SessionStatus.COMPLETED,

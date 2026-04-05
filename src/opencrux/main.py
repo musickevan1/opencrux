@@ -266,6 +266,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return Response(content=jpeg_bytes, media_type="image/jpeg")
 
+    @app.get("/api/history/scores")
+    async def get_score_history(limit: int = 50):
+        safe_limit = max(1, min(limit, 200))
+        rows = app.state.db.execute(
+            """SELECT session_id, created_at, overall_score, footwork, body_tension,
+                      route_reading, efficiency, hip_positioning, grip_technique,
+                      difficulty_estimate, route_name, gym_name
+               FROM scores ORDER BY created_at DESC LIMIT ?""",
+            (safe_limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
     @app.post("/api/sessions/analyze", response_model=SessionAnalysis)
     async def analyze_session(
         file: UploadFile = File(...),
