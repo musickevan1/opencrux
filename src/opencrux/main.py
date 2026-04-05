@@ -191,6 +191,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return app.state.jobs.get(job.id) or job
 
+    @app.get("/api/sessions/{session_id}/export")
+    async def export_session(session_id: str):
+        from .export import export_session_jsonl
+        from fastapi.responses import FileResponse
+        import tempfile
+        output = Path(tempfile.mktemp(suffix=".jsonl"))
+        try:
+            export_session_jsonl(app.state.db, session_id, output)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return FileResponse(output, media_type="application/jsonl", filename=f"{session_id}.jsonl")
+
     @app.post("/api/sessions/analyze", response_model=SessionAnalysis)
     async def analyze_session(
         file: UploadFile = File(...),
