@@ -36,6 +36,7 @@ from .models import (
     PreviewAttemptWindow,
     SessionAnalysis,
     SessionStatus,
+    utc_now,
 )
 
 logger = logging.getLogger(__name__)
@@ -198,6 +199,16 @@ class VisionAnalyzer:
         sampled_frames = 0
         frame_index = 0
         multi_pose_frames = 0
+
+        # Insert placeholder session row so FK constraints pass during frame storage
+        if self._pose_store is not None and session_id:
+            self._pose_store._db.execute(
+                """INSERT OR IGNORE INTO sessions
+                   (id, created_at, original_filename, status, session_json)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (session_id, utc_now().isoformat(), original_filename, "processing", "{}"),
+            )
+            self._pose_store._db.commit()
 
         base_options = python.BaseOptions(model_asset_path=str(model_path))
         options = vision.PoseLandmarkerOptions(
@@ -476,7 +487,7 @@ class VisionAnalyzer:
                         gym_name=gym_name,
                     )
 
-        return SessionAnalysis(
+        result = SessionAnalysis(
             id=session_id or uuid4().hex,
             status=SessionStatus.COMPLETED,
             original_filename=original_filename,
@@ -492,6 +503,16 @@ class VisionAnalyzer:
             metrics=metrics,
             llm_insights=llm_insights,
         )
+
+        # Update the session row with final analysis JSON
+        if self._pose_store is not None and session_id:
+            self._pose_store._db.execute(
+                "UPDATE sessions SET status = ?, session_json = ? WHERE id = ?",
+                ("completed", result.model_dump_json(), session_id),
+            )
+            self._pose_store._db.commit()
+
+        return result
 
     def _compute_attempt_biomechanics(
         self,
