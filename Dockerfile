@@ -13,7 +13,7 @@ COPY pyproject.toml README.md ./
 COPY src/ src/
 
 # Install as regular package (not editable)
-RUN pip install --no-cache-dir ".[llm]"
+RUN pip install --no-cache-dir ".[llm,api]"
 
 # Set data dir so paths resolve correctly in the container
 ENV OPENCRUX_DATA_DIR=/app/data
