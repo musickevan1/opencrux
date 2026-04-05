@@ -90,7 +90,8 @@ class GeminiVisionLLM:
             contents=contents,
             config=types.GenerateContentConfig(
                 temperature=self.settings.llm_temperature,
-                max_output_tokens=max_tokens or self.settings.llm_max_tokens,
+                max_output_tokens=max_tokens or max(self.settings.llm_max_tokens, 2048),
+                response_mime_type="application/json",
             ),
         )
         return response.text
