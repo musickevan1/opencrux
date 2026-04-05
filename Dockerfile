@@ -14,11 +14,12 @@ COPY src/ src/
 # Install as regular package (not editable)
 RUN pip install --no-cache-dir ".[llm]"
 
-# Pre-download the MediaPipe pose model at build time
-RUN python -c "from opencrux.config import get_settings; from opencrux.analysis import ensure_pose_model_file; ensure_pose_model_file(get_settings())"
+# Set data dir so paths resolve correctly in the container
+ENV OPENCRUX_DATA_DIR=/app/data
 
-# Create data dirs
-RUN mkdir -p data/models data/uploads data/sessions
+# Create data dirs and pre-download the MediaPipe pose model at build time
+RUN mkdir -p /app/data/models /app/data/uploads /app/data/sessions
+RUN python -c "from opencrux.config import get_settings; from opencrux.analysis import ensure_pose_model_file; ensure_pose_model_file(get_settings())"
 
 EXPOSE 8000
 

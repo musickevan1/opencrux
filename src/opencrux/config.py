@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .heuristics import DEFAULT_HEURISTIC_PROFILE
@@ -18,12 +18,22 @@ class Settings(BaseSettings):
     )
 
     data_dir: Path = Field(default=PROJECT_ROOT / "data")
-    models_dir: Path = Field(default=PROJECT_ROOT / "data" / "models")
-    upload_dir: Path = Field(default=PROJECT_ROOT / "data" / "uploads")
-    session_dir: Path = Field(default=PROJECT_ROOT / "data" / "sessions")
-    pose_model_path: Path = Field(
-        default=PROJECT_ROOT / "data" / "models" / "pose_landmarker_full.task"
-    )
+    models_dir: Path | None = None
+    upload_dir: Path | None = None
+    session_dir: Path | None = None
+    pose_model_path: Path | None = None
+
+    @model_validator(mode="after")
+    def _derive_data_paths(self) -> "Settings":
+        if self.models_dir is None:
+            self.models_dir = self.data_dir / "models"
+        if self.upload_dir is None:
+            self.upload_dir = self.data_dir / "uploads"
+        if self.session_dir is None:
+            self.session_dir = self.data_dir / "sessions"
+        if self.pose_model_path is None:
+            self.pose_model_path = self.data_dir / "models" / "pose_landmarker_full.task"
+        return self
     pose_model_url: str = Field(
         default=(
             "https://storage.googleapis.com/mediapipe-models/pose_landmarker/"

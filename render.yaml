@@ -7,5 +7,3 @@ services:
     envVars:
       - key: OPENCRUX_GEMMA_ENABLED
         value: "false"
-      - key: OPENCRUX_DATA_DIR
-        value: /app/data
