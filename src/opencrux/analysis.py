@@ -477,7 +477,7 @@ class VisionAnalyzer:
             from .vision_llm import VisionLLM
             llm = VisionLLM(self.settings)
 
-        if not llm.is_available:
+        if not llm._ensure_loaded():
             logger.info("LLM not available: %s", llm.load_error or "unknown")
             return None
 
