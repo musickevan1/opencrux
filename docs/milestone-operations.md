@@ -41,6 +41,17 @@ Current follow-on slices:
 - default product slice: Phase 1.3 CI wiring for targeted verification
 - separate bounded track: supervised heuristic autoresearch inside [src/opencrux/heuristics.py](../src/opencrux/heuristics.py)
 
+### Milestone 2
+
+Goal:
+
+- add vision-language coaching insights to the analysis pipeline using Gemma 4 via Ollama with Gemini API fallback
+
+Status:
+
+- implemented
+- tests passing
+
 ## Standard Slice Shape
 
 Every bounded slice should use these sections, whether they live in a milestone doc, a handoff doc, or a phase-specific artifact:

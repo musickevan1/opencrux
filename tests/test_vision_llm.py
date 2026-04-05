@@ -1,9 +1,8 @@
-"""Tests for the Gemma 4 vision LLM integration module."""
+"""Tests for the Gemma 4 vision LLM integration module (Ollama backend)."""
 
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -52,16 +51,16 @@ class TestVisionLLMDisabled:
 
 
 class TestVisionLLMLazyLoading:
-    """Tests for lazy model loading behavior."""
+    """Tests for lazy Ollama connectivity check."""
 
-    def test_ensure_loaded_returns_false_without_model(self):
+    def test_ensure_loaded_returns_false_when_ollama_unreachable(self):
         settings = Settings(
-            gemma_enabled=True, gemma_model_variant="google/gemma-4-E2B-it"
+            gemma_enabled=True,
+            ollama_base_url="http://localhost:99999",
         )
         from opencrux.vision_llm import VisionLLM
 
         llm = VisionLLM(settings)
-        # Without transformers/torch installed, should return False gracefully
         result = llm._ensure_loaded()
         assert result is False
         assert llm.load_error is not None
@@ -73,22 +72,54 @@ class TestVisionLLMLazyLoading:
         llm = VisionLLM(settings)
         assert llm.is_available is False
 
+    def test_ensure_loaded_returns_false_when_model_not_found(self):
+        """Mock Ollama responding but without our model in the tags list."""
+        settings = Settings(
+            gemma_enabled=True,
+            ollama_model="gemma4:nonexistent",
+        )
+        from opencrux.vision_llm import VisionLLM
+
+        llm = VisionLLM(settings)
+
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {
+            "models": [{"name": "llama3:latest"}]
+        }
+        mock_resp.raise_for_status = MagicMock()
+
+        with patch("httpx.get", return_value=mock_resp):
+            result = llm._ensure_loaded()
+
+        assert result is False
+        assert "not found" in llm.load_error.lower()
+
+
+class TestDefaultSettings:
+    """Tests for default LLM configuration."""
+
+    def test_default_model_is_ollama_gemma4(self):
+        settings = Settings()
+        assert settings.ollama_model == "gemma4:e4b"
+        assert settings.llm_backend == "ollama"
+        assert settings.llm_max_tokens == 512
+        assert settings.llm_temperature == 0.2
+
 
 class TestVisionLLMWithMockedModel:
-    """Tests for LLM analysis with mocked model responses."""
+    """Tests for LLM analysis with mocked Ollama responses."""
 
     @pytest.fixture
     def mock_llm(self):
-        """Create a VisionLLM instance with mocked model."""
+        """Create a VisionLLM instance with availability forced on."""
         settings = Settings(
-            gemma_enabled=True, gemma_model_variant="google/gemma-4-E2B-it"
+            gemma_enabled=True,
+            ollama_model="gemma4:e4b",
         )
         from opencrux.vision_llm import VisionLLM
 
         llm = VisionLLM(settings)
         llm._available = True
-        llm._model = MagicMock()
-        llm._processor = MagicMock()
         return llm
 
     def test_extract_json_plain(self, mock_llm):
@@ -126,16 +157,6 @@ class TestVisionLLMWithMockedModel:
                 "confidence": 0.82,
             }
         )
-
-        mock_llm._processor.apply_chat_template.return_value = {
-            "input_ids": MagicMock(shape=[1, 50])
-        }
-        mock_llm._processor.decode.return_value = mock_response
-        mock_llm._model.generate.return_value = MagicMock()
-        mock_llm._model.generate.return_value.__getitem__ = lambda self, idx: (
-            MagicMock()
-        )
-        mock_llm._model.device = "cpu"
 
         with patch.object(mock_llm, "_generate", return_value=mock_response):
             result = mock_llm.analyze_attempt(
@@ -271,6 +292,7 @@ class TestVisionLLMWithMockedModel:
         assert result.attempt_insights[0].attempt_index == 1
         assert result.session_summary == "Good session overall."
         assert len(result.overall_recommendations) == 1
+        assert result.model_variant == "gemma4:e4b"
 
 
 class TestTechniqueScore:
@@ -319,14 +341,14 @@ class TestLLMInsights:
     """Tests for the LLMInsights model."""
 
     def test_defaults(self):
-        insights = LLMInsights(model_variant="google/gemma-4-E2B-it")
+        insights = LLMInsights(model_variant="gemma4:e4b")
         assert insights.attempt_insights == []
         assert insights.session_summary == ""
         assert insights.overall_recommendations == []
 
     def test_with_data(self):
         insights = LLMInsights(
-            model_variant="google/gemma-4-E4B-it",
+            model_variant="gemma4:e4b",
             attempt_insights=[
                 AttemptInsight(
                     attempt_index=1,

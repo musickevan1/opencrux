@@ -10,24 +10,23 @@ Deliver a local-first climbing analytics slice for recorded single-climber bould
 
 ## Current Phase
 
-Milestone 1 vertical slice
+Milestone 2 — Gemma 4 vision-language coaching insights
 
 Status:
 
 - implemented
-- verified
-- ready for sign-off
+- tests passing (30 LLM backend tests + all M1 tests green)
 
 Supporting records:
 
+- [milestone-2.md](milestone-2.md)
+- [milestone-2-gemma4-plan.md](milestone-2-gemma4-plan.md)
 - [milestone-operations.md](milestone-operations.md)
+
+Previous milestone:
+
+- Milestone 1 vertical slice — verified, signed off
 - [milestone-1.md](milestone-1.md)
-- [phase-1-3-ci-wiring-plan.md](phase-1-3-ci-wiring-plan.md)
-- [phase-1-3-ci-wiring-log.md](phase-1-3-ci-wiring-log.md)
-- [ui-revamp-phase-1-handoff.md](ui-revamp-phase-1-handoff.md)
-- [ui-phase-1-verification-log.md](ui-phase-1-verification-log.md)
-- [phase-1-1-hardening-log.md](phase-1-1-hardening-log.md)
-- [phase-1-2-verification-operationalization-log.md](phase-1-2-verification-operationalization-log.md)
 
 ## Operating Model
 
@@ -54,8 +53,10 @@ Product behavior currently evidenced:
 
 ## What Is Not Done
 
-Still outside the finished first slice:
+Still outside the current slices:
 
+- end-to-end manual verification of LLM insights with real climbing footage and a running Ollama instance
+- prompt iteration and quality tuning for coaching output
 - launch packaging and release process
 - broader heuristic expansion beyond the narrow supported footage conditions
 - license decision for public publication
@@ -105,21 +106,17 @@ Current non-blocking risks:
 
 ## Recommended Next Product Slice
 
-Post-Phase 1.3 CI observation and launch-hygiene follow-through
-
-Latest implementation artifact:
-
-- [phase-1-3-ci-wiring-log.md](phase-1-3-ci-wiring-log.md)
+End-to-end LLM insights verification with real footage
 
 Objective:
 
-- observe the first hosted CI run, then keep the next bounded slice focused on either CI failure-artifact follow-through or the next launch-hygiene gap
+- run a real climbing clip through the pipeline with `OPENCRUX_GEMMA_ENABLED=true` and Ollama serving `gemma4:e4b`, verify the UI renders coaching insights correctly, and iterate on prompt quality if needed
 
 Success looks like:
 
-- the first remote run confirms the wrapper works on the hosted runner without a divergent command path
-- any follow-up remains operational and bounded instead of reopening product behavior
-- the current UI and analysis contracts remain unchanged
+- `llm_insights` populated in the session JSON with technique scores, coaching tips, and session summary
+- the UI renders all insight fields without layout issues
+- prompt output is specific and actionable for climbing technique
 
 ## Launch Readiness Status
 

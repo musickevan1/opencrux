@@ -1,9 +1,7 @@
 """Gemma 4 vision-language model integration for climbing analysis.
 
-This module provides a lazy-loading wrapper around Gemma 4 models
-for post-analysis reasoning on climbing footage. It supports both
-the edge-optimized E2B variant (CPU-friendly) and the E4B variant
-(GPU-accelerated).
+This module provides an Ollama HTTP API client for Gemma 4 models
+to perform post-analysis reasoning on climbing footage.
 
 Usage:
     from opencrux.config import get_settings
@@ -22,6 +20,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 from collections.abc import Sequence
@@ -33,6 +32,22 @@ from .config import Settings
 from .models import AttemptInsight, LLMInsights, TechniqueScore
 
 logger = logging.getLogger(__name__)
+
+
+def extract_json(text: str) -> dict:
+    """Extract JSON from model output, handling markdown code blocks."""
+    text = text.strip()
+
+    if text.startswith("```"):
+        lines = text.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines)
+
+    return json.loads(text)
+
 
 # Prompt template for analyzing a single climbing attempt
 ATTEMPT_ANALYSIS_PROMPT = """You are an expert climbing analyst. Analyze the provided climbing footage frames and metrics to produce a structured assessment.
@@ -102,31 +117,31 @@ class FrameSample:
 
 
 class VisionLLM:
-    """Gemma 4 vision-language model for climbing analysis.
+    """Ollama-backed Gemma 4 vision-language model for climbing analysis.
 
-    Lazily loads the model on first use to avoid startup overhead.
-    Falls back gracefully if the model cannot be loaded.
+    Connects to a local Ollama instance via HTTP API.
+    Falls back gracefully if Ollama is not running or the model is unavailable.
     """
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self._model = None
-        self._processor = None
+        self._ollama_base_url: str = settings.ollama_base_url.rstrip("/")
+        self._model_tag: str = settings.ollama_model
         self._available = False
         self._load_error: str | None = None
 
     @property
     def is_available(self) -> bool:
-        """Whether the LLM model is loaded and ready."""
+        """Whether the Ollama model is available and ready."""
         return self._available
 
     @property
     def load_error(self) -> str | None:
-        """Error message if model failed to load, None otherwise."""
+        """Error message if model check failed, None otherwise."""
         return self._load_error
 
     def _ensure_loaded(self) -> bool:
-        """Lazy-load the model. Returns True if successful."""
+        """Check that Ollama is reachable and the model exists. Returns True if ready."""
         if self._available:
             return True
 
@@ -139,92 +154,76 @@ class VisionLLM:
             return False
 
         try:
-            self._load_model()
+            self._check_ollama()
             self._available = True
             return True
         except Exception as exc:
             self._load_error = str(exc)
-            logger.warning("Failed to load Gemma model: %s", exc)
+            logger.warning("Ollama model not available: %s", exc)
             return False
 
-    def _load_model(self) -> None:
-        """Load the Gemma 4 model and processor."""
+    def _check_ollama(self) -> None:
+        """Verify Ollama is running and the configured model is available."""
         try:
-            import torch
-            from transformers import AutoProcessor, Gemma3ForConditionalGeneration
+            import httpx
         except ImportError:
             raise RuntimeError(
-                "Gemma LLM requires the 'llm' extra. Install with: pip install -e '.[llm]'"
+                "Ollama backend requires httpx. Install with: pip install -e '.[llm]'"
             )
 
-        model_name = self.settings.gemma_model_variant
-        logger.info("Loading Gemma model: %s", model_name)
+        try:
+            resp = httpx.get(f"{self._ollama_base_url}/api/tags", timeout=5.0)
+            resp.raise_for_status()
+        except httpx.ConnectError:
+            raise RuntimeError(
+                f"Cannot connect to Ollama at {self._ollama_base_url}. "
+                "Is Ollama running? Start it with: ollama serve"
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Ollama health check failed: {exc}")
 
-        # Determine device
-        if torch.cuda.is_available():
-            device = "cuda"
-            torch_dtype = torch.bfloat16
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            device = "mps"
-            torch_dtype = torch.float16
-        else:
-            device = "cpu"
-            torch_dtype = torch.float32
+        tags_data = resp.json()
+        model_names = [m.get("name", "") for m in tags_data.get("models", [])]
+        # Match with or without :latest suffix
+        if not any(
+            name == self._model_tag or name == f"{self._model_tag}:latest"
+            for name in model_names
+        ):
+            raise RuntimeError(
+                f"Model '{self._model_tag}' not found in Ollama. "
+                f"Available models: {', '.join(model_names) or 'none'}. "
+                f"Pull it with: ollama pull {self._model_tag}"
+            )
 
-        self._processor = AutoProcessor.from_pretrained(model_name)
-        self._model = Gemma3ForConditionalGeneration.from_pretrained(
-            model_name,
-            torch_dtype=torch_dtype,
-            device_map="auto" if device != "cpu" else None,
-        )
-        if device == "cpu":
-            self._model = self._model.to(device)
-        self._model.eval()
-
-        logger.info("Gemma model loaded on %s", device)
+        logger.info("Ollama model '%s' is available", self._model_tag)
 
     def _generate(self, messages: list[dict], max_new_tokens: int | None = None) -> str:
-        """Generate text from the model using chat messages."""
-        if self._model is None or self._processor is None:
-            raise RuntimeError("Model not loaded")
+        """Generate text via Ollama /api/chat endpoint."""
+        import httpx
 
-        inputs = self._processor.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
+        payload = {
+            "model": self._model_tag,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": self.settings.llm_temperature,
+                "num_predict": max_new_tokens or self.settings.llm_max_tokens,
+            },
+        }
+
+        resp = httpx.post(
+            f"{self._ollama_base_url}/api/chat",
+            json=payload,
+            timeout=120.0,
         )
+        resp.raise_for_status()
 
-        if hasattr(self._model, "device"):
-            inputs = inputs.to(self._model.device)
-
-        input_len = inputs["input_ids"].shape[-1]
-
-        generation = self._model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens or self.settings.gemma_max_new_tokens,
-            temperature=self.settings.gemma_temperature,
-            do_sample=self.settings.gemma_temperature > 0,
-        )
-        generated = generation[0][input_len:]
-        return self._processor.decode(generated, skip_special_tokens=True)
+        data = resp.json()
+        return data["message"]["content"]
 
     def _extract_json(self, text: str) -> dict:
         """Extract JSON from model output, handling markdown code blocks."""
-        text = text.strip()
-
-        # Handle markdown code blocks
-        if text.startswith("```"):
-            lines = text.split("\n")
-            # Remove first line (```json or ```) and last line (```)
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            text = "\n".join(lines)
-
-        return json.loads(text)
+        return extract_json(text)
 
     def analyze_attempt(
         self,
@@ -232,7 +231,7 @@ class VisionLLM:
         frame_images: Sequence[bytes | Path],
         metrics: dict[str, float],
     ) -> AttemptInsight | None:
-        """Analyze a single climbing attempt using Gemma 4.
+        """Analyze a single climbing attempt using Gemma 4 via Ollama.
 
         Args:
             attempt_index: 1-based attempt index
@@ -259,15 +258,19 @@ class VisionLLM:
                 hesitation_count=hesitation_count,
             )
 
-            # Build message content with images
-            content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
+            # Base64-encode images for Ollama
+            images: list[str] = []
             for img in frame_images[:5]:  # Limit to 5 frames per attempt
                 if isinstance(img, Path):
-                    content.append({"type": "image", "url": str(img)})
+                    images.append(base64.b64encode(img.read_bytes()).decode("ascii"))
                 elif isinstance(img, bytes):
-                    content.append({"type": "image", "image_bytes": img})
+                    images.append(base64.b64encode(img).decode("ascii"))
 
-            messages = [{"role": "user", "content": content}]
+            message: dict[str, Any] = {"role": "user", "content": prompt}
+            if images:
+                message["images"] = images
+
+            messages = [message]
             response_text = self._generate(messages)
             result = self._extract_json(response_text)
 
@@ -299,7 +302,7 @@ class VisionLLM:
         attempt_summaries: list[dict[str, Any]],
         metrics: dict[str, float],
     ) -> tuple[str, list[str]] | None:
-        """Generate an overall session summary using Gemma 4.
+        """Generate an overall session summary using Gemma 4 via Ollama.
 
         Args:
             attempt_summaries: List of attempt summary dicts
@@ -332,7 +335,7 @@ class VisionLLM:
                 attempt_summaries=summaries_text or "No attempt details available.",
             )
 
-            messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+            messages = [{"role": "user", "content": prompt}]
             response_text = self._generate(messages, max_new_tokens=256)
             result = self._extract_json(response_text)
 
@@ -385,7 +388,7 @@ class VisionLLM:
             session_summary, recommendations = summary_result
 
         return LLMInsights(
-            model_variant=self.settings.gemma_model_variant,
+            model_variant=self._model_tag,
             attempt_insights=attempt_insights,
             session_summary=session_summary,
             overall_recommendations=recommendations,

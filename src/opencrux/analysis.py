@@ -464,17 +464,21 @@ class VisionAnalyzer:
         if not self.settings.gemma_enabled:
             return None
 
-        try:
+        if self.settings.llm_backend == "gemini":
+            try:
+                from .gemini_llm import GeminiVisionLLM
+            except ImportError:
+                logger.warning(
+                    "Gemini LLM backend not available. Install with: pip install -e '.[api]'"
+                )
+                return None
+            llm = GeminiVisionLLM(self.settings)
+        else:
             from .vision_llm import VisionLLM
-        except ImportError:
-            logger.warning(
-                "Gemma LLM module not available. Install with: pip install -e '.[llm]'"
-            )
-            return None
+            llm = VisionLLM(self.settings)
 
-        llm = VisionLLM(self.settings)
         if not llm.is_available:
-            logger.info("Gemma LLM not available: %s", llm.load_error or "unknown")
+            logger.info("LLM not available: %s", llm.load_error or "unknown")
             return None
 
         # Sample frames per attempt from the video
@@ -525,10 +529,10 @@ class VisionAnalyzer:
     ) -> dict[int, list[bytes]]:
         """Extract JPEG frame bytes for key moments in each attempt.
 
-        Samples up to `gemma_sample_frames_per_attempt` frames per attempt
+        Samples up to `llm_sample_frames_per_attempt` frames per attempt
         at evenly spaced timestamps (start, middle, end).
         """
-        frames_per_attempt = self.settings.gemma_sample_frames_per_attempt
+        frames_per_attempt = self.settings.llm_sample_frames_per_attempt
         frames_by_attempt: dict[int, list[bytes]] = {}
 
         capture = cv2.VideoCapture(str(video_path))
@@ -583,21 +587,3 @@ class VisionAnalyzer:
 
         capture.release()
         return frames_by_attempt
-        if failure_message is not None:
-            raise AnalysisError(failure_message)
-
-        return SessionAnalysis(
-            id=session_id or uuid4().hex,
-            status=SessionStatus.COMPLETED,
-            original_filename=original_filename,
-            stored_video_path=str(video_path),
-            route_name=route_name,
-            gym_name=gym_name,
-            processed_frame_count=sampled_frames,
-            sampled_fps=sampled_fps,
-            source_duration_seconds=source_duration_seconds
-            or round(observations[-1].timestamp_seconds, 2),
-            warnings=warnings,
-            attempts=attempt_summaries,
-            metrics=metrics,
-        )

@@ -50,12 +50,16 @@ class Settings(BaseSettings):
     preview_max_width: int = 960
     preview_history_limit: int = 10
 
-    # Gemma 4 LLM settings
+    # LLM coaching settings
     gemma_enabled: bool = False
-    gemma_model_variant: str = "google/gemma-4-E2B-it"
-    gemma_max_new_tokens: int = 512
-    gemma_temperature: float = 0.2
-    gemma_sample_frames_per_attempt: int = 3
+    llm_backend: str = "ollama"  # "ollama" or "gemini"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "gemma4:e4b"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+    llm_max_tokens: int = 512
+    llm_temperature: float = 0.2
+    llm_sample_frames_per_attempt: int = 3
 
 
 @lru_cache(maxsize=1)
