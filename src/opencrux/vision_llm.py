@@ -207,19 +207,23 @@ class VisionLLM:
             "stream": False,
             "options": {
                 "temperature": self.settings.llm_temperature,
-                "num_predict": max_new_tokens or self.settings.llm_max_tokens,
+                "num_predict": max(max_new_tokens or self.settings.llm_max_tokens, 4096),
             },
+            "think": False,
         }
 
         resp = httpx.post(
             f"{self._ollama_base_url}/api/chat",
             json=payload,
-            timeout=120.0,
+            timeout=300.0,
         )
         resp.raise_for_status()
 
         data = resp.json()
-        return data["message"]["content"]
+        content = data["message"]["content"]
+        if not content and data["message"].get("thinking"):
+            content = data["message"]["thinking"]
+        return content
 
     def _extract_json(self, text: str) -> dict:
         """Extract JSON from model output, handling markdown code blocks."""
