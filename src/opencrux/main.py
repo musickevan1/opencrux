@@ -117,6 +117,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "pose_model_size_bytes": model_path.stat().st_size if model_path and model_path.exists() else 0,
             "upload_dir_contents": os.listdir(str(settings.upload_dir)) if settings.upload_dir and settings.upload_dir.exists() else [],
             "OPENCRUX_DATA_DIR": os.environ.get("OPENCRUX_DATA_DIR", "<not set>"),
+            "gemma_enabled": settings.gemma_enabled,
+            "llm_backend": settings.llm_backend,
+            "gemini_api_key_set": bool(settings.gemini_api_key),
+            "gemini_model": settings.gemini_model,
+            "OPENCRUX_GEMMA_ENABLED": os.environ.get("OPENCRUX_GEMMA_ENABLED", "<not set>"),
+            "OPENCRUX_LLM_BACKEND": os.environ.get("OPENCRUX_LLM_BACKEND", "<not set>"),
         }
 
     @app.get("/api/sessions", response_model=list[SessionAnalysis])
