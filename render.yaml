@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: opencrux
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: OPENCRUX_GEMMA_ENABLED
+        value: "false"
+      - key: OPENCRUX_DATA_DIR
+        value: /app/data

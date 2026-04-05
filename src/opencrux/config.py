@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     preview_jpeg_quality: int = 72
     preview_max_width: int = 960
     preview_history_limit: int = 10
+    max_upload_mb: int = 50
 
     # LLM coaching settings
     gemma_enabled: bool = False

@@ -135,6 +135,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with destination.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        max_bytes = settings.max_upload_mb * 1024 * 1024
+        if destination.stat().st_size > max_bytes:
+            destination.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Video too large. Maximum size is {settings.max_upload_mb} MB.",
+            )
+
         job = app.state.jobs.create(
             original_filename=file.filename or destination.name,
             route_name=route_name,
@@ -169,6 +177,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         with destination.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+
+        max_bytes = settings.max_upload_mb * 1024 * 1024
+        if destination.stat().st_size > max_bytes:
+            destination.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Video too large. Maximum size is {settings.max_upload_mb} MB.",
+            )
 
         try:
             analysis = app.state.analyzer.analyze(
