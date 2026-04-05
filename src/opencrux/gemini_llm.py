@@ -17,7 +17,13 @@ from typing import Any
 
 from .config import Settings
 from .models import AttemptInsight, LLMInsights, TechniqueScore
-from .vision_llm import ATTEMPT_ANALYSIS_PROMPT, SESSION_SUMMARY_PROMPT, extract_json
+from .vision_llm import (
+    ATTEMPT_ANALYSIS_PROMPT,
+    ENHANCED_ATTEMPT_PROMPT,
+    SESSION_SUMMARY_PROMPT,
+    _format_biomechanics,
+    extract_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +34,13 @@ class GeminiVisionLLM:
     Same interface as VisionLLM for seamless backend switching.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None, session_id: str | None = None) -> None:
         self.settings = settings
         self._client = None
         self._available = False
         self._load_error: str | None = None
+        self._pose_store = pose_store
+        self._session_id = session_id
 
     @property
     def is_available(self) -> bool:
@@ -101,18 +109,34 @@ class GeminiVisionLLM:
         attempt_index: int,
         frame_images: Sequence[bytes | Path],
         metrics: dict[str, float],
+        biomechanics: dict | None = None,
     ) -> AttemptInsight | None:
         if not self._ensure_loaded():
             return None
 
         try:
-            prompt = ATTEMPT_ANALYSIS_PROMPT.format(
-                attempt_index=attempt_index,
-                vertical_progress=metrics.get("vertical_progress", 0.0),
-                lateral_span=metrics.get("lateral_span", 0.0),
-                duration=metrics.get("duration", 0.0),
-                hesitation_count=metrics.get("hesitation_count", 0),
-            )
+            vertical_progress = metrics.get("vertical_progress", 0.0)
+            lateral_span = metrics.get("lateral_span", 0.0)
+            duration = metrics.get("duration", 0.0)
+            hesitation_count = metrics.get("hesitation_count", 0)
+
+            if biomechanics is not None:
+                prompt = ENHANCED_ATTEMPT_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                    biomechanics_text=_format_biomechanics(biomechanics),
+                )
+            else:
+                prompt = ATTEMPT_ANALYSIS_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                )
 
             images: list[bytes] = []
             for img in frame_images[:5]:
@@ -122,6 +146,17 @@ class GeminiVisionLLM:
                     images.append(img)
 
             response_text = self._generate(prompt, images)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self.settings.gemini_model,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    attempt_index=attempt_index,
+                    output_type="attempt_analysis",
+                )
+
             result = extract_json(response_text)
 
             return AttemptInsight(
@@ -138,8 +173,16 @@ class GeminiVisionLLM:
                     efficiency=result.get("technique_scores", {}).get(
                         "efficiency", 0.0
                     ),
+                    hip_positioning=result.get("technique_scores", {}).get(
+                        "hip_positioning", 0.0
+                    ),
+                    grip_technique=result.get("technique_scores", {}).get(
+                        "grip_technique", 0.0
+                    ),
                 ),
                 coaching_tips=result.get("coaching_tips", []),
+                technique_highlights=result.get("technique_highlights", []),
+                frame_notes=result.get("frame_notes", []),
                 difficulty_estimate=result.get("difficulty_estimate"),
                 confidence=result.get("confidence", 0.5),
             )
@@ -178,6 +221,16 @@ class GeminiVisionLLM:
             )
 
             response_text = self._generate(prompt, max_tokens=256)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self.settings.gemini_model,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    output_type="session_summary",
+                )
+
             result = extract_json(response_text)
 
             return (
@@ -208,7 +261,8 @@ class GeminiVisionLLM:
                 "duration": attempt.get("duration_seconds", 0.0),
                 "hesitation_count": len(attempt.get("hesitation_markers", [])),
             }
-            insight = self.analyze_attempt(idx, frames, metrics)
+            biomechanics = attempt.get("biomechanics")
+            insight = self.analyze_attempt(idx, frames, metrics, biomechanics=biomechanics)
             if insight is not None:
                 attempt_insights.append(insight)
 

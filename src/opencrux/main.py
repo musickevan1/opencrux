@@ -14,8 +14,10 @@ from fastapi.templating import Jinja2Templates
 
 from .analysis import AnalysisError, VisionAnalyzer
 from .config import PROJECT_ROOT, Settings, get_settings
+from .db import Database
 from .jobs import AnalysisJobStore
 from .models import AnalysisJob, SessionAnalysis
+from .pose_store import PoseStore
 from .store import SessionStore
 
 
@@ -45,7 +47,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.state.settings = settings
     app.state.store = SessionStore(settings.session_dir)
-    app.state.analyzer = VisionAnalyzer(settings)
+    db = Database(settings.db_path)
+    app.state.db = db
+    app.state.pose_store = PoseStore(db)
+    app.state.analyzer = VisionAnalyzer(settings, pose_store=app.state.pose_store)
     app.state.jobs = AnalysisJobStore(max_preview_frames=settings.preview_history_limit)
     app.state.templates = templates
 
@@ -185,6 +190,93 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             gym_name=gym_name,
         )
         return app.state.jobs.get(job.id) or job
+
+    @app.get("/api/sessions/{session_id}/export")
+    async def export_session(session_id: str):
+        from .export import export_session_jsonl
+        from fastapi.responses import FileResponse
+        import tempfile
+        output = Path(tempfile.mktemp(suffix=".jsonl"))
+        try:
+            export_session_jsonl(app.state.db, session_id, output)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return FileResponse(output, media_type="application/jsonl", filename=f"{session_id}.jsonl")
+
+    @app.get("/api/sessions/{session_id}/annotated-frames/{frame_index}")
+    async def get_annotated_frame(session_id: str, frame_index: int):
+        import cv2
+        from .annotator import annotate_frame, AnnotationLayer
+        from .biomechanics import compute_frame_angles
+        from fastapi.responses import Response
+
+        session = app.state.store.get(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Get stored frames for this session
+        frames = app.state.pose_store.get_session_frames(session_id)
+        target = next((f for f in frames if f["frame_index"] == frame_index), None)
+        if target is None:
+            raise HTTPException(status_code=404, detail="Frame not found")
+
+        landmarks_raw = app.state.pose_store.get_frame_landmarks(target["id"])
+        if not landmarks_raw:
+            raise HTTPException(status_code=404, detail="No landmarks for frame")
+
+        # Build full 33-landmark list indexed by landmark_index
+        lm_list = [{"x": 0.0, "y": 0.0, "z": 0.0, "visibility": 0.0}] * 33
+        for lm in landmarks_raw:
+            lm_list[lm["landmark_index"]] = lm
+
+        # Load video frame at the correct timestamp
+        video_path = session.stored_video_path
+        if video_path is None:
+            raise HTTPException(status_code=404, detail="Video not found")
+
+        # Handle both absolute and relative paths
+        from pathlib import Path
+        vpath = Path(video_path)
+        if not vpath.is_absolute():
+            vpath = settings.data_dir.parent / vpath
+        if not vpath.exists():
+            raise HTTPException(status_code=404, detail="Video file not found")
+
+        cap = cv2.VideoCapture(str(vpath))
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+        frame_number = int(target["timestamp_seconds"] * fps)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        ret, video_frame = cap.read()
+        cap.release()
+        if not ret:
+            raise HTTPException(status_code=404, detail="Could not read frame")
+
+        # Compute angles and annotate
+        angles = compute_frame_angles(lm_list)
+
+        # Build centroid trail from surrounding frames
+        trail = [(f["centroid_x"], f["centroid_y"]) for f in frames]
+
+        jpeg_bytes = annotate_frame(
+            frame=video_frame,
+            landmarks=lm_list,
+            angles=angles,
+            layers=[AnnotationLayer.SKELETON, AnnotationLayer.ANGLES, AnnotationLayer.MOVEMENT_TRAIL],
+            centroid_trail=trail,
+        )
+        return Response(content=jpeg_bytes, media_type="image/jpeg")
+
+    @app.get("/api/history/scores")
+    async def get_score_history(limit: int = 50):
+        safe_limit = max(1, min(limit, 200))
+        rows = app.state.db.execute(
+            """SELECT session_id, created_at, overall_score, footwork, body_tension,
+                      route_reading, efficiency, hip_positioning, grip_technique,
+                      difficulty_estimate, route_name, gym_name
+               FROM scores ORDER BY created_at DESC LIMIT ?""",
+            (safe_limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     @app.post("/api/sessions/analyze", response_model=SessionAnalysis)
     async def analyze_session(

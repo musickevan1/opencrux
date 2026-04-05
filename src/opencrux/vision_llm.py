@@ -84,6 +84,55 @@ Respond ONLY with valid JSON matching this exact schema:
 
 Be specific and actionable. Focus on observable technique, not vague encouragement."""
 
+ENHANCED_ATTEMPT_PROMPT = """You are an expert climbing coach analyzing a bouldering attempt with detailed biomechanical data.
+
+## Attempt #{attempt_index}
+
+### Movement Metrics
+- Vertical progress: {vertical_progress:.1%}
+- Lateral span: {lateral_span:.1%}
+- Duration: {duration:.1f}s
+- Hesitation markers: {hesitation_count}
+
+### Biomechanical Analysis
+{biomechanics_text}
+
+## Task
+Provide a detailed technique assessment. Reference specific body positions and angles from the data. Be precise about what the climber is doing well and what needs work.
+
+Respond ONLY with valid JSON:
+{{
+  "movement_description": "2-3 sentences describing the climbing movement pattern",
+  "technique_scores": {{
+    "footwork": float 0-5,
+    "body_tension": float 0-5,
+    "route_reading": float 0-5,
+    "efficiency": float 0-5,
+    "hip_positioning": float 0-5,
+    "grip_technique": float 0-5
+  }},
+  "coaching_tips": ["specific tip referencing observed angles/positions"],
+  "technique_highlights": ["what they did well with specific evidence"],
+  "difficulty_estimate": "V-grade",
+  "confidence": float 0-1,
+  "frame_notes": ["observations about specific body positions"]
+}}"""
+
+
+def _format_biomechanics(bio: dict) -> str:
+    """Format biomechanics dict as human-readable text for prompts."""
+    lines = []
+    if bio.get("mean_hip_wall_offset") is not None:
+        lines.append(f"- Mean hip-to-wall offset: {bio['mean_hip_wall_offset']:.1f} degrees")
+    if bio.get("min_elbow_angle") is not None:
+        lines.append(f"- Minimum elbow angle: {bio['min_elbow_angle']:.1f} degrees")
+    if bio.get("max_arm_extension") is not None:
+        lines.append(f"- Maximum arm extension: {bio['max_arm_extension']:.3f}")
+    if bio.get("mean_body_span") is not None:
+        lines.append(f"- Mean body span: {bio['mean_body_span']:.3f}")
+    return "\n".join(lines) if lines else "No biomechanical data available."
+
+
 SESSION_SUMMARY_PROMPT = """You are an expert climbing analyst. Based on the following session data, provide a brief overall summary and 2-3 key recommendations.
 
 ## Session Data
@@ -123,12 +172,14 @@ class VisionLLM:
     Falls back gracefully if Ollama is not running or the model is unavailable.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None, session_id: str | None = None) -> None:
         self.settings = settings
         self._ollama_base_url: str = settings.ollama_base_url.rstrip("/")
         self._model_tag: str = settings.ollama_model
         self._available = False
         self._load_error: str | None = None
+        self._pose_store = pose_store
+        self._session_id = session_id
 
     @property
     def is_available(self) -> bool:
@@ -234,6 +285,7 @@ class VisionLLM:
         attempt_index: int,
         frame_images: Sequence[bytes | Path],
         metrics: dict[str, float],
+        biomechanics: dict | None = None,
     ) -> AttemptInsight | None:
         """Analyze a single climbing attempt using Gemma 4 via Ollama.
 
@@ -241,6 +293,7 @@ class VisionLLM:
             attempt_index: 1-based attempt index
             frame_images: List of frame images as bytes or file paths
             metrics: Dict with vertical_progress, lateral_span, duration, hesitation_count
+            biomechanics: Optional dict with biomechanical data for enhanced prompts
 
         Returns:
             AttemptInsight or None if analysis failed
@@ -254,13 +307,23 @@ class VisionLLM:
             duration = metrics.get("duration", 0.0)
             hesitation_count = metrics.get("hesitation_count", 0)
 
-            prompt = ATTEMPT_ANALYSIS_PROMPT.format(
-                attempt_index=attempt_index,
-                vertical_progress=vertical_progress,
-                lateral_span=lateral_span,
-                duration=duration,
-                hesitation_count=hesitation_count,
-            )
+            if biomechanics is not None:
+                prompt = ENHANCED_ATTEMPT_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                    biomechanics_text=_format_biomechanics(biomechanics),
+                )
+            else:
+                prompt = ATTEMPT_ANALYSIS_PROMPT.format(
+                    attempt_index=attempt_index,
+                    vertical_progress=vertical_progress,
+                    lateral_span=lateral_span,
+                    duration=duration,
+                    hesitation_count=hesitation_count,
+                )
 
             # Base64-encode images for Ollama
             images: list[str] = []
@@ -276,6 +339,17 @@ class VisionLLM:
 
             messages = [message]
             response_text = self._generate(messages)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self._model_tag,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    attempt_index=attempt_index,
+                    output_type="attempt_analysis",
+                )
+
             result = self._extract_json(response_text)
 
             return AttemptInsight(
@@ -292,8 +366,16 @@ class VisionLLM:
                     efficiency=result.get("technique_scores", {}).get(
                         "efficiency", 0.0
                     ),
+                    hip_positioning=result.get("technique_scores", {}).get(
+                        "hip_positioning", 0.0
+                    ),
+                    grip_technique=result.get("technique_scores", {}).get(
+                        "grip_technique", 0.0
+                    ),
                 ),
                 coaching_tips=result.get("coaching_tips", []),
+                technique_highlights=result.get("technique_highlights", []),
+                frame_notes=result.get("frame_notes", []),
                 difficulty_estimate=result.get("difficulty_estimate"),
                 confidence=result.get("confidence", 0.5),
             )
@@ -341,6 +423,16 @@ class VisionLLM:
 
             messages = [{"role": "user", "content": prompt}]
             response_text = self._generate(messages, max_new_tokens=256)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self._model_tag,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    output_type="session_summary",
+                )
+
             result = self._extract_json(response_text)
 
             return (
@@ -380,7 +472,8 @@ class VisionLLM:
                 "duration": attempt.get("duration_seconds", 0.0),
                 "hesitation_count": len(attempt.get("hesitation_markers", [])),
             }
-            insight = self.analyze_attempt(idx, frames, metrics)
+            biomechanics = attempt.get("biomechanics")
+            insight = self.analyze_attempt(idx, frames, metrics, biomechanics=biomechanics)
             if insight is not None:
                 attempt_insights.append(insight)
 

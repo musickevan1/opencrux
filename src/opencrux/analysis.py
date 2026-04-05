@@ -27,8 +27,10 @@ from .heuristics import (
     get_multi_pose_ratio,
     segment_attempts,
 )
+from .biomechanics import compute_frame_angles, compute_reach_metrics
 from .models import (
     AttemptSummary,
+    BiomechanicSummary,
     LLMInsights,
     ProcessingWarning,
     PreviewAttemptWindow,
@@ -157,8 +159,9 @@ def ensure_pose_model_file(settings: Settings) -> Path:
 
 
 class VisionAnalyzer:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None) -> None:
         self.settings = settings
+        self._pose_store = pose_store
 
     def analyze(
         self,
@@ -267,6 +270,25 @@ class VisionAnalyzer:
                                 (delta_x**2 + delta_y**2) ** 0.5
                             ) / delta_time
                         observations.append(observation)
+
+                        if self._pose_store is not None:
+                            primary_landmarks = results.pose_landmarks[0]
+                            landmark_data = [
+                                {"index": i, "x": lm.x, "y": lm.y, "z": lm.z, "visibility": lm.visibility}
+                                for i, lm in enumerate(primary_landmarks)
+                            ]
+                            self._pose_store.store_frame(
+                                session_id=session_id or "",
+                                frame_index=sampled_frames,
+                                timestamp_seconds=timestamp_seconds,
+                                centroid_x=observation.centroid_x,
+                                centroid_y=observation.centroid_y,
+                                visibility_ratio=observation.visibility_ratio,
+                                visible_landmark_count=observation.visible_landmarks,
+                                speed=observation.speed,
+                                detected_pose_count=detected_pose_count,
+                                landmarks=landmark_data,
+                            )
 
                 if progress_callback is not None:
                     coverage_ratio = (
@@ -420,6 +442,12 @@ class VisionAnalyzer:
         if failure_message is not None:
             raise AnalysisError(failure_message)
 
+        # Compute biomechanics for each attempt if pose data is available
+        attempt_summaries = self._compute_attempt_biomechanics(
+            session_id=session_id or "",
+            attempt_summaries=attempt_summaries,
+        )
+
         # Run Gemma 4 LLM analysis if enabled
         llm_insights = self._analyze_with_llm(
             video_path=video_path,
@@ -428,7 +456,25 @@ class VisionAnalyzer:
             observations=observations,
             fps=fps,
             sample_every=sample_every,
+            session_id=session_id,
         )
+
+        if llm_insights and llm_insights.attempt_insights and self._pose_store:
+            for insight in llm_insights.attempt_insights:
+                if insight.technique_scores:
+                    self._pose_store.store_score(
+                        session_id=session_id,
+                        overall_score=insight.technique_scores.overall,
+                        footwork=insight.technique_scores.footwork,
+                        body_tension=insight.technique_scores.body_tension,
+                        route_reading=insight.technique_scores.route_reading,
+                        efficiency=insight.technique_scores.efficiency,
+                        hip_positioning=insight.technique_scores.hip_positioning,
+                        grip_technique=insight.technique_scores.grip_technique,
+                        difficulty_estimate=insight.difficulty_estimate,
+                        route_name=route_name,
+                        gym_name=gym_name,
+                    )
 
         return SessionAnalysis(
             id=session_id or uuid4().hex,
@@ -447,6 +493,76 @@ class VisionAnalyzer:
             llm_insights=llm_insights,
         )
 
+    def _compute_attempt_biomechanics(
+        self,
+        session_id: str,
+        attempt_summaries: list[AttemptSummary],
+    ) -> list[AttemptSummary]:
+        """Compute biomechanical metrics for each attempt from stored pose data."""
+        if self._pose_store is None:
+            return attempt_summaries
+
+        frames = self._pose_store.get_session_frames(session_id)
+        if not frames:
+            return attempt_summaries
+
+        updated: list[AttemptSummary] = []
+        for attempt in attempt_summaries:
+            # Find frames within this attempt's time range
+            attempt_frames = [
+                f for f in frames
+                if attempt.start_seconds <= f["timestamp_seconds"] <= attempt.end_seconds
+            ]
+
+            hip_offsets: list[float] = []
+            elbow_angles: list[float] = []
+            arm_extensions: list[float] = []
+            body_spans: list[float] = []
+
+            for frame_row in attempt_frames:
+                landmarks = self._pose_store.get_frame_landmarks(frame_row["id"])
+                if not landmarks or len(landmarks) < 33:
+                    continue
+
+                # Build the 33-element list indexed by landmark_index
+                lm_list: list[dict] = [{}] * 33
+                for lm in landmarks:
+                    idx = lm["landmark_index"]
+                    if 0 <= idx < 33:
+                        lm_list[idx] = lm
+
+                angles = compute_frame_angles(lm_list)
+                reach = compute_reach_metrics(lm_list)
+
+                if "hip_wall_offset" in angles:
+                    hip_offsets.append(angles["hip_wall_offset"])
+                for key in ("left_elbow", "right_elbow"):
+                    if key in angles:
+                        elbow_angles.append(angles[key])
+                for key in ("left_arm_extension", "right_arm_extension"):
+                    if key in reach:
+                        arm_extensions.append(reach[key])
+                if "body_span" in reach:
+                    body_spans.append(reach["body_span"])
+
+            bio = BiomechanicSummary(
+                mean_hip_wall_offset=round(sum(hip_offsets) / len(hip_offsets), 2) if hip_offsets else None,
+                min_elbow_angle=round(min(elbow_angles), 1) if elbow_angles else None,
+                max_arm_extension=round(max(arm_extensions), 3) if arm_extensions else None,
+                mean_body_span=round(sum(body_spans) / len(body_spans), 3) if body_spans else None,
+            )
+
+            # Only attach if we got any data
+            has_data = any(
+                v is not None for v in [
+                    bio.mean_hip_wall_offset, bio.min_elbow_angle,
+                    bio.max_arm_extension, bio.mean_body_span,
+                ]
+            )
+            updated.append(attempt.model_copy(update={"biomechanics": bio if has_data else None}))
+
+        return updated
+
     def _analyze_with_llm(
         self,
         video_path: Path,
@@ -455,6 +571,7 @@ class VisionAnalyzer:
         observations: list[FrameObservation],
         fps: float,
         sample_every: int,
+        session_id: str | None = None,
     ) -> LLMInsights | None:
         """Run Gemma 4 LLM analysis on the session if enabled.
 
@@ -472,10 +589,10 @@ class VisionAnalyzer:
                     "Gemini LLM backend not available. Install with: pip install -e '.[api]'"
                 )
                 return None
-            llm = GeminiVisionLLM(self.settings)
+            llm = GeminiVisionLLM(self.settings, pose_store=self._pose_store, session_id=session_id)
         else:
             from .vision_llm import VisionLLM
-            llm = VisionLLM(self.settings)
+            llm = VisionLLM(self.settings, pose_store=self._pose_store, session_id=session_id)
 
         if not llm._ensure_loaded():
             logger.info("LLM not available: %s", llm.load_error or "unknown")
@@ -511,6 +628,12 @@ class VisionAnalyzer:
                     {"timestamp": h.timestamp_seconds, "duration": h.duration_seconds}
                     for h in a.hesitation_markers
                 ],
+                "biomechanics": {
+                    "mean_hip_wall_offset": a.biomechanics.mean_hip_wall_offset,
+                    "min_elbow_angle": a.biomechanics.min_elbow_angle,
+                    "max_arm_extension": a.biomechanics.max_arm_extension,
+                    "mean_body_span": a.biomechanics.mean_body_span,
+                } if a.biomechanics else None,
             }
             for a in attempt_summaries
         ]

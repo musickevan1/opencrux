@@ -39,6 +39,27 @@ class HesitationMarker(BaseModel):
     duration_seconds: float
 
 
+class JointAngles(BaseModel):
+    """Joint angles computed from a single frame's pose landmarks."""
+    left_elbow: float | None = None
+    right_elbow: float | None = None
+    left_shoulder: float | None = None
+    right_shoulder: float | None = None
+    left_hip: float | None = None
+    right_hip: float | None = None
+    left_knee: float | None = None
+    right_knee: float | None = None
+    hip_wall_offset: float | None = None
+
+
+class BiomechanicSummary(BaseModel):
+    """Aggregate biomechanical metrics for an attempt."""
+    mean_hip_wall_offset: float | None = None
+    min_elbow_angle: float | None = None
+    max_arm_extension: float | None = None
+    mean_body_span: float | None = None
+
+
 class AttemptSummary(BaseModel):
     index: int
     start_seconds: float
@@ -47,6 +68,7 @@ class AttemptSummary(BaseModel):
     vertical_progress_ratio: float
     lateral_span_ratio: float
     hesitation_markers: list[HesitationMarker] = Field(default_factory=list)
+    biomechanics: BiomechanicSummary | None = None
 
 
 class SessionMetrics(BaseModel):
@@ -131,15 +153,24 @@ class TechniqueScore(BaseModel):
     efficiency: float = Field(
         ge=0.0, le=5.0, description="Movement economy and energy conservation (0-5)"
     )
+    hip_positioning: float = Field(
+        default=0.0, ge=0.0, le=5.0, description="Hip position relative to wall (0-5)"
+    )
+    grip_technique: float = Field(
+        default=0.0, ge=0.0, le=5.0, description="Grip form and hand technique (0-5)"
+    )
 
     @property
     def overall(self) -> float:
-        """Average of all technique scores."""
-        return round(
-            (self.footwork + self.body_tension + self.route_reading + self.efficiency)
-            / 4,
-            1,
-        )
+        """Average of all non-zero technique scores."""
+        scores = [
+            self.footwork, self.body_tension, self.route_reading,
+            self.efficiency, self.hip_positioning, self.grip_technique,
+        ]
+        nonzero = [s for s in scores if s > 0]
+        if not nonzero:
+            return 0.0
+        return round(sum(nonzero) / len(nonzero), 1)
 
 
 class AttemptInsight(BaseModel):
@@ -149,6 +180,8 @@ class AttemptInsight(BaseModel):
     movement_description: str = ""
     technique_scores: TechniqueScore | None = None
     coaching_tips: list[str] = Field(default_factory=list)
+    technique_highlights: list[str] = Field(default_factory=list)
+    frame_notes: list[str] = Field(default_factory=list)
     difficulty_estimate: str | None = None
     confidence: float = Field(
         default=0.5,
