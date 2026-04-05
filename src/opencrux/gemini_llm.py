@@ -143,7 +143,8 @@ class GeminiVisionLLM:
                 confidence=result.get("confidence", 0.5),
             )
         except Exception as exc:
-            logger.error("Failed to analyze attempt %d: %s\n%s", attempt_index, exc, traceback.format_exc())
+            import sys
+            print(f"GEMINI ERROR analyze_attempt {attempt_index}: {exc}\n{traceback.format_exc()}", file=sys.stderr, flush=True)
             return None
 
     def generate_session_summary(
@@ -183,7 +184,8 @@ class GeminiVisionLLM:
                 result.get("overall_recommendations", []),
             )
         except Exception as exc:
-            logger.error("Failed to generate session summary: %s\n%s", exc, traceback.format_exc())
+            import sys
+            print(f"GEMINI ERROR session_summary: {exc}\n{traceback.format_exc()}", file=sys.stderr, flush=True)
             return None
 
     def analyze_session(
