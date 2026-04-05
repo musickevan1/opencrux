@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import logging
 import shutil
+import traceback
 from pathlib import Path
 from uuid import uuid4
 
@@ -79,8 +81,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except AnalysisError as error:
             app.state.jobs.fail(job_id, str(error))
             return
-        except Exception:
-            app.state.jobs.fail(job_id, "Unexpected analysis failure.")
+        except Exception as exc:
+            logging.getLogger("opencrux").error(
+                "Analysis job %s failed: %s\n%s", job_id, exc, traceback.format_exc()
+            )
+            app.state.jobs.fail(job_id, f"Unexpected analysis failure: {exc}")
             return
 
         app.state.jobs.complete(job_id, stored_analysis)
@@ -94,8 +99,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @app.get("/api/health")
-    async def health() -> dict[str, str]:
+    async def health() -> dict:
         return {"status": "ok"}
+
+    @app.get("/api/debug/env")
+    async def debug_env() -> dict:
+        import os
+        data_dir = settings.data_dir
+        model_path = settings.pose_model_path
+        return {
+            "data_dir": str(data_dir),
+            "data_dir_exists": data_dir.exists() if data_dir else False,
+            "models_dir": str(settings.models_dir),
+            "upload_dir": str(settings.upload_dir),
+            "pose_model_path": str(model_path),
+            "pose_model_exists": model_path.exists() if model_path else False,
+            "pose_model_size_bytes": model_path.stat().st_size if model_path and model_path.exists() else 0,
+            "upload_dir_contents": os.listdir(str(settings.upload_dir)) if settings.upload_dir and settings.upload_dir.exists() else [],
+            "OPENCRUX_DATA_DIR": os.environ.get("OPENCRUX_DATA_DIR", "<not set>"),
+        }
 
     @app.get("/api/sessions", response_model=list[SessionAnalysis])
     async def list_sessions(limit: int = 10) -> list[SessionAnalysis]:
