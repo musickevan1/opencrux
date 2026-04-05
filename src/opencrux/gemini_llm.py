@@ -10,6 +10,7 @@ Requires: pip install -e '.[api]'
 from __future__ import annotations
 
 import logging
+import traceback
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -142,7 +143,7 @@ class GeminiVisionLLM:
                 confidence=result.get("confidence", 0.5),
             )
         except Exception as exc:
-            logger.warning("Failed to analyze attempt %d: %s", attempt_index, exc)
+            logger.error("Failed to analyze attempt %d: %s\n%s", attempt_index, exc, traceback.format_exc())
             return None
 
     def generate_session_summary(
@@ -182,7 +183,7 @@ class GeminiVisionLLM:
                 result.get("overall_recommendations", []),
             )
         except Exception as exc:
-            logger.warning("Failed to generate session summary: %s", exc)
+            logger.error("Failed to generate session summary: %s\n%s", exc, traceback.format_exc())
             return None
 
     def analyze_session(
