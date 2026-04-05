@@ -14,8 +14,10 @@ from fastapi.templating import Jinja2Templates
 
 from .analysis import AnalysisError, VisionAnalyzer
 from .config import PROJECT_ROOT, Settings, get_settings
+from .db import Database
 from .jobs import AnalysisJobStore
 from .models import AnalysisJob, SessionAnalysis
+from .pose_store import PoseStore
 from .store import SessionStore
 
 
@@ -45,7 +47,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.state.settings = settings
     app.state.store = SessionStore(settings.session_dir)
-    app.state.analyzer = VisionAnalyzer(settings)
+    db = Database(settings.db_path)
+    app.state.db = db
+    app.state.pose_store = PoseStore(db)
+    app.state.analyzer = VisionAnalyzer(settings, pose_store=app.state.pose_store)
     app.state.jobs = AnalysisJobStore(max_preview_frames=settings.preview_history_limit)
     app.state.templates = templates
 

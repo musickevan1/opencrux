@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     upload_dir: Path | None = None
     session_dir: Path | None = None
     pose_model_path: Path | None = None
+    db_path: Path | None = None
 
     @model_validator(mode="after")
     def _derive_data_paths(self) -> "Settings":
@@ -33,6 +34,8 @@ class Settings(BaseSettings):
             self.session_dir = self.data_dir / "sessions"
         if self.pose_model_path is None:
             self.pose_model_path = self.data_dir / "models" / "pose_landmarker_full.task"
+        if self.db_path is None:
+            self.db_path = self.data_dir / "opencrux.db"
         return self
     pose_model_url: str = Field(
         default=(

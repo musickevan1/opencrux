@@ -123,12 +123,14 @@ class VisionLLM:
     Falls back gracefully if Ollama is not running or the model is unavailable.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None, session_id: str | None = None) -> None:
         self.settings = settings
         self._ollama_base_url: str = settings.ollama_base_url.rstrip("/")
         self._model_tag: str = settings.ollama_model
         self._available = False
         self._load_error: str | None = None
+        self._pose_store = pose_store
+        self._session_id = session_id
 
     @property
     def is_available(self) -> bool:
@@ -276,6 +278,17 @@ class VisionLLM:
 
             messages = [message]
             response_text = self._generate(messages)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self._model_tag,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    attempt_index=attempt_index,
+                    output_type="attempt_analysis",
+                )
+
             result = self._extract_json(response_text)
 
             return AttemptInsight(
@@ -341,6 +354,16 @@ class VisionLLM:
 
             messages = [{"role": "user", "content": prompt}]
             response_text = self._generate(messages, max_new_tokens=256)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self._model_tag,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    output_type="session_summary",
+                )
+
             result = self._extract_json(response_text)
 
             return (

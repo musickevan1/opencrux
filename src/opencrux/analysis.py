@@ -157,8 +157,9 @@ def ensure_pose_model_file(settings: Settings) -> Path:
 
 
 class VisionAnalyzer:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None) -> None:
         self.settings = settings
+        self._pose_store = pose_store
 
     def analyze(
         self,
@@ -267,6 +268,25 @@ class VisionAnalyzer:
                                 (delta_x**2 + delta_y**2) ** 0.5
                             ) / delta_time
                         observations.append(observation)
+
+                        if self._pose_store is not None:
+                            primary_landmarks = results.pose_landmarks[0]
+                            landmark_data = [
+                                {"index": i, "x": lm.x, "y": lm.y, "z": lm.z, "visibility": lm.visibility}
+                                for i, lm in enumerate(primary_landmarks)
+                            ]
+                            self._pose_store.store_frame(
+                                session_id=session_id or "",
+                                frame_index=sampled_frames,
+                                timestamp_seconds=timestamp_seconds,
+                                centroid_x=observation.centroid_x,
+                                centroid_y=observation.centroid_y,
+                                visibility_ratio=observation.visibility_ratio,
+                                visible_landmark_count=observation.visible_landmarks,
+                                speed=observation.speed,
+                                detected_pose_count=detected_pose_count,
+                                landmarks=landmark_data,
+                            )
 
                 if progress_callback is not None:
                     coverage_ratio = (
@@ -428,6 +448,7 @@ class VisionAnalyzer:
             observations=observations,
             fps=fps,
             sample_every=sample_every,
+            session_id=session_id,
         )
 
         return SessionAnalysis(
@@ -455,6 +476,7 @@ class VisionAnalyzer:
         observations: list[FrameObservation],
         fps: float,
         sample_every: int,
+        session_id: str | None = None,
     ) -> LLMInsights | None:
         """Run Gemma 4 LLM analysis on the session if enabled.
 
@@ -472,10 +494,10 @@ class VisionAnalyzer:
                     "Gemini LLM backend not available. Install with: pip install -e '.[api]'"
                 )
                 return None
-            llm = GeminiVisionLLM(self.settings)
+            llm = GeminiVisionLLM(self.settings, pose_store=self._pose_store, session_id=session_id)
         else:
             from .vision_llm import VisionLLM
-            llm = VisionLLM(self.settings)
+            llm = VisionLLM(self.settings, pose_store=self._pose_store, session_id=session_id)
 
         if not llm._ensure_loaded():
             logger.info("LLM not available: %s", llm.load_error or "unknown")

@@ -28,11 +28,13 @@ class GeminiVisionLLM:
     Same interface as VisionLLM for seamless backend switching.
     """
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, pose_store=None, session_id: str | None = None) -> None:
         self.settings = settings
         self._client = None
         self._available = False
         self._load_error: str | None = None
+        self._pose_store = pose_store
+        self._session_id = session_id
 
     @property
     def is_available(self) -> bool:
@@ -122,6 +124,17 @@ class GeminiVisionLLM:
                     images.append(img)
 
             response_text = self._generate(prompt, images)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self.settings.gemini_model,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    attempt_index=attempt_index,
+                    output_type="attempt_analysis",
+                )
+
             result = extract_json(response_text)
 
             return AttemptInsight(
@@ -178,6 +191,16 @@ class GeminiVisionLLM:
             )
 
             response_text = self._generate(prompt, max_tokens=256)
+
+            if self._pose_store and self._session_id:
+                self._pose_store.store_llm_output(
+                    session_id=self._session_id,
+                    model_variant=self.settings.gemini_model,
+                    prompt_text=prompt,
+                    response_text=response_text,
+                    output_type="session_summary",
+                )
+
             result = extract_json(response_text)
 
             return (
